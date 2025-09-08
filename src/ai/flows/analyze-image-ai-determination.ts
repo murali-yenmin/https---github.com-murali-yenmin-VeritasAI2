@@ -1,0 +1,56 @@
+'use server';
+/**
+ * @fileOverview Analyzes an image to determine if it is AI-generated.
+ *
+ * - analyzeImageAiDetermination - A function that analyzes the image and determines if it's AI-generated.
+ * - AnalyzeImageAiDeterminationInput - The input type for the analyzeImageAiDetermination function.
+ * - AnalyzeImageAiDeterminationOutput - The return type for the analyzeImageAiDetermination function.
+ */
+
+import {ai} from '@/ai/genkit';
+import {z} from 'genkit';
+
+const AnalyzeImageAiDeterminationInputSchema = z.object({
+  photoDataUri: z
+    .string()
+    .describe(
+      'A photo to analyze, as a data URI that must include a MIME type and use Base64 encoding. Expected format: \'data:<mimetype>;base64,<encoded_data>\'.')
+});
+export type AnalyzeImageAiDeterminationInput = z.infer<typeof AnalyzeImageAiDeterminationInputSchema>;
+
+const AnalyzeImageAiDeterminationOutputSchema = z.object({
+  isAiGenerated: z.boolean().describe('Whether the image is AI-generated or not.'),
+  confidenceScore: z.number().describe('The confidence score of the AI determination (0-1).'),
+  analysis: z.string().describe('A brief analysis explaining why the image was classified as AI or Human.'),
+  potentialModificationAreas: z.string().optional().describe('If AI-generated, suggests where potential modifications happened.'),
+});
+export type AnalyzeImageAiDeterminationOutput = z.infer<typeof AnalyzeImageAiDeterminationOutputSchema>;
+
+export async function analyzeImageAiDetermination(input: AnalyzeImageAiDeterminationInput): Promise<AnalyzeImageAiDeterminationOutput> {
+  return analyzeImageAiDeterminationFlow(input);
+}
+
+const analyzeImageAiDeterminationPrompt = ai.definePrompt({
+  name: 'analyzeImageAiDeterminationPrompt',
+  input: {schema: AnalyzeImageAiDeterminationInputSchema},
+  output: {schema: AnalyzeImageAiDeterminationOutputSchema},
+  prompt: `You are an expert in identifying AI-generated images. Analyze the given image and determine if it is AI-generated or human.
+
+Provide a confidence score (0-1) for your determination. Also, provide a brief analysis explaining why the image was classified as AI or human. If you determine that the photo may be AI-generated, suggest to the user where potential modifications happened.
+
+Image: {{media url=photoDataUri}}
+
+Ensure that isAiGenerated is true if the image is determined to be AI-generated, and false if human.`, 
+});
+
+const analyzeImageAiDeterminationFlow = ai.defineFlow(
+  {
+    name: 'analyzeImageAiDeterminationFlow',
+    inputSchema: AnalyzeImageAiDeterminationInputSchema,
+    outputSchema: AnalyzeImageAiDeterminationOutputSchema,
+  },
+  async input => {
+    const {output} = await analyzeImageAiDeterminationPrompt(input);
+    return output!;
+  }
+);
