@@ -2,9 +2,10 @@
 
 import { useState, useRef, type ChangeEvent, type DragEvent, useCallback, useEffect } from 'react';
 import Image from 'next/image';
-import { Bot, User, UploadCloud, Loader2, RefreshCw, X } from 'lucide-react';
+import { Bot, User, UploadCloud, Loader2, RefreshCw, X, Video } from 'lucide-react';
 import { analyzeImageAiDetermination, type AnalyzeImageAiDeterminationOutput } from '@/ai/flows/analyze-image-ai-determination';
 import { analyzeTextAiDetermination, type AnalyzeTextAiDeterminationOutput } from '@/ai/flows/analyze-text-ai-determination';
+import { analyzeVideoAiDetermination, type AnalyzeVideoAiDeterminationOutput } from '@/ai/flows/analyze-video-ai-determination';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -47,7 +48,7 @@ const useCountUp = (end: number, duration: number = 1.5) => {
   return count;
 };
 
-const AnalysisResultDisplay = ({ analysis, onReset }: { analysis: AnalyzeImageAiDeterminationOutput | AnalyzeTextAiDeterminationOutput; onReset: () => void }) => {
+const AnalysisResultDisplay = ({ analysis, onReset }: { analysis: AnalyzeImageAiDeterminationOutput | AnalyzeTextAiDeterminationOutput | AnalyzeVideoAiDeterminationOutput; onReset: () => void }) => {
   const confidence = Math.round(analysis.confidenceScore * 100);
   const animatedConfidence = useCountUp(confidence);
 
@@ -312,29 +313,185 @@ const TextAnalysis = () => {
   );
 };
 
+const VideoAnalysis = () => {
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<AnalyzeVideoAiDeterminationOutput | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const handleFileSelect = (file: File | null) => {
+    if (!file) return;
+
+    if (!file.type.startsWith('video/')) {
+      const err = 'Please upload a video file (e.g., MP4, WEBM).';
+      setError(err);
+      toast({ title: "Invalid File Type", description: err, variant: "destructive" });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setVideoPreview(reader.result as string);
+      setAnalysis(null);
+      setError(null);
+    };
+    reader.onerror = () => {
+      const err = "Failed to read the selected file.";
+      setError(err);
+      toast({ title: "Error", description: err, variant: "destructive" });
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  const onFileChange = (e: ChangeEvent<HTMLInputElement>) => handleFileSelect(e.target.files?.[0] || null);
+  const onDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    handleFileSelect(e.dataTransfer.files?.[0] || null);
+  };
+
+  const handleDragEvents = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setIsDragging(true);
+    } else if (e.type === 'dragleave') {
+      setIsDragging(false);
+    }
+  };
+
+  const resetState = useCallback(() => {
+    setVideoPreview(null);
+    setAnalysis(null);
+    setError(null);
+    setIsLoading(false);
+    if(fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
+  const handleAnalyze = async () => {
+    if (!videoPreview) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await analyzeVideoAiDetermination({ videoDataUri: videoPreview });
+      setAnalysis(result);
+    } catch (e: any) {
+      const err = e.message || "An unexpected error occurred during analysis.";
+      setError(err);
+      toast({ title: "Analysis Failed", description: err, variant: "destructive" });
+      setAnalysis(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 h-64 animate-in fade-in">
+        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+        <p className="text-muted-foreground">Analyzing your video...</p>
+      </div>
+    );
+  }
+
+  if (analysis) {
+    return <AnalysisResultDisplay analysis={analysis} onReset={resetState} />;
+  }
+
+  return (
+    <div className="space-y-6">
+      {!videoPreview ? (
+        <div
+          className={cn(
+            'relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors',
+            isDragging && 'border-primary bg-accent/20'
+          )}
+          onDragEnter={handleDragEvents}
+          onDragLeave={handleDragEvents}
+          onDragOver={handleDragEvents}
+          onDrop={onDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Video className="h-12 w-12 text-muted-foreground mb-4"/>
+          <p className="text-center text-muted-foreground">
+            <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+          </p>
+          <p className="text-xs text-muted-foreground">MP4, WEBM</p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="video/mp4, video/webm"
+            className="hidden"
+            onChange={onFileChange}
+          />
+        </div>
+      ) : (
+        <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+          <video src={videoPreview} controls className="w-full h-full" />
+           <Button
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2 rounded-full h-8 w-8"
+              onClick={() => resetState()}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Remove video</span>
+            </Button>
+        </div>
+      )}
+      {error && (
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <Button onClick={handleAnalyze} disabled={!videoPreview || isLoading} className="w-full" size="lg">
+        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+        Analyze Video
+      </Button>
+    </div>
+  );
+};
+
 
 export function AIHumanDetector() {
   const [activeTab, setActiveTab] = useState("image");
 
+  const descriptions: { [key: string]: string } = {
+    image: "Upload an image to see if it's AI generated.",
+    text: "Enter text to see if it's AI written.",
+    video: "Upload a video to see if it's AI generated.",
+  };
+  
   return (
     <Card className="w-full max-w-lg mx-auto shadow-2xl transition-all duration-500">
       <CardHeader className="text-center p-6">
         <CardTitle className="text-2xl font-headline">Let's Find Out</CardTitle>
         <CardDescription>
-          {activeTab === 'image' ? "Upload an image to see if it's AI generated." : "Enter text to see if it's AI generated."}
+          {descriptions[activeTab]}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6 pt-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="image">Image Analysis</TabsTrigger>
             <TabsTrigger value="text">Text Analysis</TabsTrigger>
+            <TabsTrigger value="video">Video Analysis</TabsTrigger>
           </TabsList>
           <TabsContent value="image" className="mt-6">
             <ImageAnalysis />
           </TabsContent>
           <TabsContent value="text" className="mt-6">
             <TextAnalysis />
+          </TabsContent>
+          <TabsContent value="video" className="mt-6">
+            <VideoAnalysis />
           </TabsContent>
         </Tabs>
       </CardContent>
