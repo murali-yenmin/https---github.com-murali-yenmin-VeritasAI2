@@ -4,12 +4,15 @@ import { useState, useRef, type ChangeEvent, type DragEvent, useCallback, useEff
 import Image from 'next/image';
 import { Bot, User, UploadCloud, Loader2, RefreshCw, X } from 'lucide-react';
 import { analyzeImageAiDetermination, type AnalyzeImageAiDeterminationOutput } from '@/ai/flows/analyze-image-ai-determination';
+import { analyzeTextAiDetermination, type AnalyzeTextAiDeterminationOutput } from '@/ai/flows/analyze-text-ai-determination';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Textarea } from './ui/textarea';
 
 const useCountUp = (end: number, duration: number = 1.5) => {
   const [count, setCount] = useState(0);
@@ -44,13 +47,14 @@ const useCountUp = (end: number, duration: number = 1.5) => {
   return count;
 };
 
-const AnalysisResultDisplay = ({ analysis, onReset }: { analysis: AnalyzeImageAiDeterminationOutput; onReset: () => void }) => {
+const AnalysisResultDisplay = ({ analysis, onReset }: { analysis: AnalyzeImageAiDeterminationOutput | AnalyzeTextAiDeterminationOutput; onReset: () => void }) => {
   const confidence = Math.round(analysis.confidenceScore * 100);
   const animatedConfidence = useCountUp(confidence);
 
   const ResultIcon = analysis.isAiGenerated ? Bot : User;
   const resultText = analysis.isAiGenerated ? "THIS IS AI" : "THIS IS HUMAN";
   const resultColor = analysis.isAiGenerated ? "text-destructive" : "text-green-500";
+  const potentialModifications = (analysis as AnalyzeImageAiDeterminationOutput).potentialModificationAreas;
 
   return (
     <div className="flex flex-col items-center gap-6 animate-in fade-in duration-500">
@@ -76,13 +80,13 @@ const AnalysisResultDisplay = ({ analysis, onReset }: { analysis: AnalyzeImageAi
             <p className="text-sm text-muted-foreground">{analysis.analysis}</p>
           </CardContent>
         </Card>
-        {analysis.isAiGenerated && analysis.potentialModificationAreas && (
+        {analysis.isAiGenerated && potentialModifications && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Potential Modifications</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">{analysis.potentialModificationAreas}</p>
+              <p className="text-sm text-muted-foreground">{potentialModifications}</p>
             </CardContent>
           </Card>
         )}
@@ -95,8 +99,7 @@ const AnalysisResultDisplay = ({ analysis, onReset }: { analysis: AnalyzeImageAi
   );
 };
 
-
-export function AIHumanDetector() {
+const ImageAnalysis = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<AnalyzeImageAiDeterminationOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -174,75 +177,166 @@ export function AIHumanDetector() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 h-64 animate-in fade-in">
+        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+        <p className="text-muted-foreground">Analyzing your image...</p>
+      </div>
+    );
+  }
+
+  if (analysis) {
+    return <AnalysisResultDisplay analysis={analysis} onReset={resetState} />;
+  }
+
+  return (
+    <div className="space-y-6">
+      {!imagePreview ? (
+        <div
+          className={cn(
+            'relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors',
+            isDragging && 'border-primary bg-accent/20'
+          )}
+          onDragEnter={handleDragEvents}
+          onDragLeave={handleDragEvents}
+          onDragOver={handleDragEvents}
+          onDrop={onDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <UploadCloud className="h-12 w-12 text-muted-foreground mb-4"/>
+          <p className="text-center text-muted-foreground">
+            <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+          </p>
+          <p className="text-xs text-muted-foreground">PNG, JPG, or WEBP</p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png, image/jpeg, image/webp"
+            className="hidden"
+            onChange={onFileChange}
+          />
+        </div>
+      ) : (
+        <div className="relative w-full aspect-square rounded-lg overflow-hidden">
+          <Image src={imagePreview} alt="Image preview" layout="fill" objectFit="cover" />
+           <Button
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2 rounded-full h-8 w-8"
+              onClick={() => resetState()}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Remove image</span>
+            </Button>
+        </div>
+      )}
+      {error && (
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <Button onClick={handleAnalyze} disabled={!imagePreview || isLoading} className="w-full" size="lg">
+        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+        Analyze Image
+      </Button>
+    </div>
+  );
+};
+
+const TextAnalysis = () => {
+  const [text, setText] = useState('');
+  const [analysis, setAnalysis] = useState<AnalyzeTextAiDeterminationOutput | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const resetState = useCallback(() => {
+    setText('');
+    setAnalysis(null);
+    setError(null);
+    setIsLoading(false);
+  }, []);
+
+  const handleAnalyze = async () => {
+    if (!text.trim()) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await analyzeTextAiDetermination({ text });
+      setAnalysis(result);
+    } catch (e: any) {
+      const err = e.message || "An unexpected error occurred during analysis.";
+      setError(err);
+      toast({ title: "Analysis Failed", description: err, variant: "destructive" });
+      setAnalysis(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 h-64 animate-in fade-in">
+        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+        <p className="text-muted-foreground">Analyzing your text...</p>
+      </div>
+    );
+  }
+
+  if (analysis) {
+    return <AnalysisResultDisplay analysis={analysis} onReset={resetState} />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <Textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Paste or type your text here to see if it's AI-generated..."
+        className="min-h-[16rem] text-base"
+        disabled={isLoading}
+      />
+      {error && (
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <Button onClick={handleAnalyze} disabled={!text.trim() || isLoading} className="w-full" size="lg">
+        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+        Analyze Text
+      </Button>
+    </div>
+  );
+};
+
+
+export function AIHumanDetector() {
+  const [activeTab, setActiveTab] = useState("image");
+
   return (
     <Card className="w-full max-w-lg mx-auto shadow-2xl transition-all duration-500">
       <CardHeader className="text-center p-6">
         <CardTitle className="text-2xl font-headline">Let's Find Out</CardTitle>
         <CardDescription>
-          {analysis ? 'Here is the analysis of your image.' : 'Upload an image to see if it\'s AI generated.'}
+          {activeTab === 'image' ? "Upload an image to see if it's AI generated." : "Enter text to see if it's AI generated."}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6 pt-0">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center gap-4 h-64 animate-in fade-in">
-            <Loader2 className="h-12 w-12 text-primary animate-spin" />
-            <p className="text-muted-foreground">Analyzing your image...</p>
-          </div>
-        ) : analysis ? (
-          <AnalysisResultDisplay analysis={analysis} onReset={resetState} />
-        ) : (
-          <div className="space-y-6">
-            {!imagePreview ? (
-              <div
-                className={cn(
-                  'relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors',
-                  isDragging && 'border-primary bg-accent/20'
-                )}
-                onDragEnter={handleDragEvents}
-                onDragLeave={handleDragEvents}
-                onDragOver={handleDragEvents}
-                onDrop={onDrop}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <UploadCloud className="h-12 w-12 text-muted-foreground mb-4"/>
-                <p className="text-center text-muted-foreground">
-                  <span className="font-semibold text-primary">Click to upload</span> or drag and drop
-                </p>
-                <p className="text-xs text-muted-foreground">PNG, JPG, or WEBP</p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png, image/jpeg, image/webp"
-                  className="hidden"
-                  onChange={onFileChange}
-                />
-              </div>
-            ) : (
-              <div className="relative w-full aspect-square rounded-lg overflow-hidden">
-                <Image src={imagePreview} alt="Image preview" layout="fill" objectFit="cover" />
-                 <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 rounded-full h-8 w-8"
-                    onClick={() => resetState()}
-                  >
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Remove image</span>
-                  </Button>
-              </div>
-            )}
-            {error && (
-              <Alert variant="destructive">
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <Button onClick={handleAnalyze} disabled={!imagePreview || isLoading} className="w-full" size="lg">
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Analyze Image
-            </Button>
-          </div>
-        )}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="image">Image Analysis</TabsTrigger>
+            <TabsTrigger value="text">Text Analysis</TabsTrigger>
+          </TabsList>
+          <TabsContent value="image" className="mt-6">
+            <ImageAnalysis />
+          </TabsContent>
+          <TabsContent value="text" className="mt-6">
+            <TextAnalysis />
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
