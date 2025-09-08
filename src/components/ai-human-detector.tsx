@@ -461,7 +461,7 @@ const VideoAnalysis = () => {
 
 
 export function AIHumanDetector() {
-  const [activeTab, setActiveTab] = useState("image");
+  const [activeTab, setActiveTab] = useState("text");
 
   const descriptions: { [key: string]: string } = {
     image: "Upload an image to see if it's AI generated.",
@@ -480,15 +480,15 @@ export function AIHumanDetector() {
       <CardContent className="p-6 pt-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="image">Image Analysis</TabsTrigger>
             <TabsTrigger value="text">Text Analysis</TabsTrigger>
+            <TabsTrigger value="image">Image Analysis</TabsTrigger>
             <TabsTrigger value="video">Video Analysis</TabsTrigger>
           </TabsList>
-          <TabsContent value="image" className="mt-6">
-            <ImageAnalysis />
-          </TabsContent>
           <TabsContent value="text" className="mt-6">
             <TextAnalysis />
+          </TabsContent>
+          <TabsContent value="image" className="mt-6">
+            <ImageAnalysis />
           </TabsContent>
           <TabsContent value="video" className="mt-6">
             <VideoAnalysis />
