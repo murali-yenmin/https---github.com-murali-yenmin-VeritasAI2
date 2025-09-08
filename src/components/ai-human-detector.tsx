@@ -2,7 +2,7 @@
 
 import { useState, useRef, type ChangeEvent, type DragEvent, useCallback, useEffect } from 'react';
 import Image from 'next/image';
-import { Bot, User, UploadCloud, Loader2, RefreshCw, X, Video, FileImage, Type, AlertCircle } from 'lucide-react';
+import { Bot, User, UploadCloud, Loader2, RefreshCw, X, Video, FileImage, Type, AlertCircle, Link, File } from 'lucide-react';
 import { analyzeImageAiDetermination, type AnalyzeImageAiDeterminationOutput } from '@/ai/flows/analyze-image-ai-determination';
 import { analyzeTextAiDetermination, type AnalyzeTextAiDeterminationOutput } from '@/ai/flows/analyze-text-ai-determination';
 import { analyzeVideoAiDetermination, type AnalyzeVideoAiDeterminationOutput } from '@/ai/flows/analyze-video-ai-determination';
@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Textarea } from './ui/textarea';
+import { Input } from './ui/input';
+import { mediaUrlToDataUri } from '@/app/actions';
 
 const useCountUp = (end: number, duration: number = 1.5) => {
   const [count, setCount] = useState(0);
@@ -106,10 +108,12 @@ const ImageAnalysis = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [inputType, setInputType] = useState<'upload' | 'url'>('upload');
+  const [url, setUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFileSelect = (file: File | null) => {
+  const handleFileSelect = (file: globalThis.File | null) => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
@@ -156,17 +160,36 @@ const ImageAnalysis = () => {
     setAnalysis(null);
     setError(null);
     setIsLoading(false);
+    setUrl('');
     if(fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   }, []);
 
   const handleAnalyze = async () => {
-    if (!imagePreview) return;
+    let dataUri = imagePreview;
     setIsLoading(true);
     setError(null);
+
     try {
-      const result = await analyzeImageAiDetermination({ photoDataUri: imagePreview });
+      if(inputType === 'url') {
+        const result = await mediaUrlToDataUri(url);
+        if (result.error) {
+          setError(result.error);
+          setIsLoading(false);
+          return;
+        }
+        dataUri = result.dataUri!;
+        setImagePreview(dataUri);
+      }
+
+      if (!dataUri) {
+        setError("Please select an image or provide a URL.");
+        setIsLoading(false);
+        return;
+      };
+
+      const result = await analyzeImageAiDetermination({ photoDataUri: dataUri });
       setAnalysis(result);
       
     } catch (e: any) {
@@ -194,32 +217,53 @@ const ImageAnalysis = () => {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-center rounded-md bg-muted p-1 text-muted-foreground w-max mx-auto">
+        <Button variant={inputType === 'upload' ? 'ghost' : 'ghost'} onClick={() => setInputType('upload')} className={cn('h-8', inputType === 'upload' ? 'bg-background text-foreground shadow-sm' : '')}><File className="mr-2"/>Upload</Button>
+        <Button variant={inputType === 'url' ? 'ghost' : 'ghost'} onClick={() => { setInputType('url'); resetState(); }} className={cn('h-8', inputType === 'url' ? 'bg-background text-foreground shadow-sm' : '')}><Link className="mr-2"/>URL</Button>
+      </div>
+
       {!imagePreview && (
-        <div
-          className={cn(
-            'relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors',
-            isDragging && 'border-primary bg-accent/20'
+        <>
+          {inputType === 'upload' ? (
+             <div
+                className={cn(
+                  'relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors',
+                  isDragging && 'border-primary bg-accent/20'
+                )}
+                onDragEnter={handleDragEvents}
+                onDragLeave={handleDragEvents}
+                onDragOver={handleDragEvents}
+                onDrop={onDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <UploadCloud className="h-12 w-12 text-muted-foreground mb-4"/>
+                <p className="text-center text-muted-foreground">
+                  <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+                </p>
+                <p className="text-xs text-muted-foreground">PNG, JPG, WEBP, or AVIF</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp, image/avif"
+                  className="hidden"
+                  onChange={onFileChange}
+                />
+              </div>
+          ) : (
+            <div className="space-y-2">
+              <Input 
+                type="url" 
+                placeholder="Enter image URL" 
+                value={url}
+                onChange={(e) => { setUrl(e.target.value); setError(null); }}
+                className="w-full"
+                disabled={isLoading}
+              />
+            </div>
           )}
-          onDragEnter={handleDragEvents}
-          onDragLeave={handleDragEvents}
-          onDragOver={handleDragEvents}
-          onDrop={onDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <UploadCloud className="h-12 w-12 text-muted-foreground mb-4"/>
-          <p className="text-center text-muted-foreground">
-            <span className="font-semibold text-primary">Click to upload</span> or drag and drop
-          </p>
-          <p className="text-xs text-muted-foreground">PNG, JPG, or WEBP</p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/png, image/jpeg, image/webp"
-            className="hidden"
-            onChange={onFileChange}
-          />
-        </div>
+        </>
       )}
+
 
       {imagePreview && (
         <div className="relative w-full aspect-square rounded-lg overflow-hidden">
@@ -236,7 +280,7 @@ const ImageAnalysis = () => {
         </div>
       )}
 
-      {(!imagePreview && error) && (
+      {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -244,7 +288,7 @@ const ImageAnalysis = () => {
         </Alert>
       )}
       
-      <Button onClick={handleAnalyze} disabled={!imagePreview || isLoading} className="w-full" size="lg">
+      <Button onClick={handleAnalyze} disabled={(!imagePreview && inputType === 'upload') || (inputType==='url' && !url) || isLoading} className="w-full" size="lg">
         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         Analyze Image
       </Button>
@@ -326,10 +370,12 @@ const VideoAnalysis = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [inputType, setInputType] = useState<'upload' | 'url'>('upload');
+  const [url, setUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFileSelect = (file: File | null) => {
+  const handleFileSelect = (file: globalThis.File | null) => {
     if (!file) return;
 
     if (!file.type.startsWith('video/')) {
@@ -376,18 +422,36 @@ const VideoAnalysis = () => {
     setAnalysis(null);
     setError(null);
     setIsLoading(false);
+    setUrl('');
     if(fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   }, []);
 
   const handleAnalyze = async () => {
-    if (!videoPreview) return;
-
+    let dataUri = videoPreview;
     setIsLoading(true);
     setError(null);
+
     try {
-      const result = await analyzeVideoAiDetermination({ videoDataUri: videoPreview });
+      if(inputType === 'url') {
+        const result = await mediaUrlToDataUri(url);
+        if (result.error) {
+          setError(result.error);
+          setIsLoading(false);
+          return;
+        }
+        dataUri = result.dataUri!;
+        setVideoPreview(dataUri);
+      }
+      
+      if (!dataUri) {
+        setError("Please select a video or provide a URL.");
+        setIsLoading(false);
+        return;
+      };
+
+      const result = await analyzeVideoAiDetermination({ videoDataUri: dataUri });
       setAnalysis(result);
 
     } catch (e: any) {
@@ -415,31 +479,51 @@ const VideoAnalysis = () => {
 
   return (
     <div className="space-y-6">
+       <div className="flex justify-center rounded-md bg-muted p-1 text-muted-foreground w-max mx-auto">
+        <Button variant={inputType === 'upload' ? 'ghost' : 'ghost'} onClick={() => setInputType('upload')} className={cn('h-8', inputType === 'upload' ? 'bg-background text-foreground shadow-sm' : '')}><File className="mr-2"/>Upload</Button>
+        <Button variant={inputType === 'url' ? 'ghost' : 'ghost'} onClick={() => { setInputType('url'); resetState(); }} className={cn('h-8', inputType === 'url' ? 'bg-background text-foreground shadow-sm' : '')}><Link className="mr-2"/>URL</Button>
+      </div>
+
       {!videoPreview && (
-        <div
-          className={cn(
-            'relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors',
-            isDragging && 'border-primary bg-accent/20'
-          )}
-          onDragEnter={handleDragEvents}
-          onDragLeave={handleDragEvents}
-          onDragOver={handleDragEvents}
-          onDrop={onDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <Video className="h-12 w-12 text-muted-foreground mb-4"/>
-          <p className="text-center text-muted-foreground">
-            <span className="font-semibold text-primary">Click to upload</span> or drag and drop
-          </p>
-          <p className="text-xs text-muted-foreground">MP4, WEBM</p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="video/mp4, video/webm"
-            className="hidden"
-            onChange={onFileChange}
-          />
-        </div>
+        <>
+        {inputType === 'upload' ? (
+          <div
+            className={cn(
+              'relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors',
+              isDragging && 'border-primary bg-accent/20'
+            )}
+            onDragEnter={handleDragEvents}
+            onDragLeave={handleDragEvents}
+            onDragOver={handleDragEvents}
+            onDrop={onDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <UploadCloud className="h-12 w-12 text-muted-foreground mb-4"/>
+            <p className="text-center text-muted-foreground">
+              <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+            </p>
+            <p className="text-xs text-muted-foreground">MP4, WEBM</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="video/mp4, video/webm"
+              className="hidden"
+              onChange={onFileChange}
+            />
+          </div>
+        ) : (
+            <div className="space-y-2">
+              <Input 
+                type="url" 
+                placeholder="Enter video URL" 
+                value={url}
+                onChange={(e) => { setUrl(e.target.value); setError(null); }}
+                className="w-full"
+                disabled={isLoading}
+              />
+            </div>
+        )}
+        </>
       )}
       
       {videoPreview && (
@@ -457,7 +541,7 @@ const VideoAnalysis = () => {
         </div>
       )}
 
-      {(!videoPreview && error) && (
+      {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -465,7 +549,7 @@ const VideoAnalysis = () => {
         </Alert>
       )}
 
-      <Button onClick={handleAnalyze} disabled={!videoPreview || isLoading} className="w-full" size="lg">
+      <Button onClick={handleAnalyze} disabled={(!videoPreview && inputType === 'upload') || (inputType==='url' && !url) || isLoading} className="w-full" size="lg">
         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         Analyze Video
       </Button>
