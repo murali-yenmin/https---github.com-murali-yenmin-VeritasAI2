@@ -2,7 +2,7 @@
 
 import { useState, useRef, type ChangeEvent, type DragEvent, useCallback, useEffect } from 'react';
 import Image from 'next/image';
-import { Bot, User, UploadCloud, Loader2, RefreshCw, X, Video, Link as LinkIcon } from 'lucide-react';
+import { Bot, User, UploadCloud, Loader2, RefreshCw, X, Video, Link as LinkIcon, FileImage } from 'lucide-react';
 import { analyzeImageAiDetermination, type AnalyzeImageAiDeterminationOutput } from '@/ai/flows/analyze-image-ai-determination';
 import { analyzeTextAiDetermination, type AnalyzeTextAiDeterminationOutput } from '@/ai/flows/analyze-text-ai-determination';
 import { analyzeVideoAiDetermination, type AnalyzeVideoAiDeterminationOutput } from '@/ai/flows/analyze-video-ai-determination';
@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
+import { mediaUrlToDataUri } from '@/app/actions';
 
 const useCountUp = (end: number, duration: number = 1.5) => {
   const [count, setCount] = useState(0);
@@ -166,16 +167,30 @@ const ImageAnalysis = () => {
   }, []);
 
   const handleAnalyze = async () => {
-    const source = inputType === 'url' ? imageUrl : imagePreview;
-    if (!source) return;
+    if (!imagePreview && !imageUrl) return;
     setIsLoading(true);
     setError(null);
     try {
-      const result = await analyzeImageAiDetermination({ photoDataUri: source });
-      setAnalysis(result);
-      if (inputType === 'url' && !imagePreview) {
-        setImagePreview(source);
+      let dataUri: string | undefined;
+
+      if (inputType === 'url' && imageUrl) {
+        const response = await mediaUrlToDataUri(imageUrl);
+        if (response.error) {
+          throw new Error(response.error);
+        }
+        dataUri = response.dataUri;
+        setImagePreview(dataUri!);
+      } else if (imagePreview) {
+        dataUri = imagePreview;
       }
+      
+      if (!dataUri) {
+        throw new Error("No image source found to analyze.");
+      }
+
+      const result = await analyzeImageAiDetermination({ photoDataUri: dataUri });
+      setAnalysis(result);
+      
     } catch (e: any) {
       const err = e.message || "An unexpected error occurred during analysis.";
       setError(err);
@@ -201,7 +216,7 @@ const ImageAnalysis = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs value={inputType} onValueChange={(v) => setInputType(v as any)} className="w-full">
+      <Tabs value={inputType} onValueChange={(v) => { setInputType(v as any); resetState(); }} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="upload">
             <UploadCloud className="mr-2 h-4 w-4" />
@@ -416,16 +431,31 @@ const VideoAnalysis = () => {
   }, []);
 
   const handleAnalyze = async () => {
-    const source = inputType === 'url' ? videoUrl : videoPreview;
-    if (!source) return;
+    if (!videoPreview && !videoUrl) return;
+
     setIsLoading(true);
     setError(null);
     try {
-      const result = await analyzeVideoAiDetermination({ videoDataUri: source });
-      setAnalysis(result);
-      if (inputType === 'url' && !videoPreview) {
-        setVideoPreview(source);
+      let dataUri: string | undefined;
+
+      if (inputType === 'url' && videoUrl) {
+        const response = await mediaUrlToDataUri(videoUrl);
+        if (response.error) {
+          throw new Error(response.error);
+        }
+        dataUri = response.dataUri;
+        setVideoPreview(dataUri!);
+      } else if (videoPreview) {
+        dataUri = videoPreview;
       }
+      
+      if (!dataUri) {
+        throw new Error("No video source found to analyze.");
+      }
+      
+      const result = await analyzeVideoAiDetermination({ videoDataUri: dataUri });
+      setAnalysis(result);
+
     } catch (e: any) {
       const err = e.message || "An unexpected error occurred during analysis.";
       setError(err);
@@ -451,7 +481,7 @@ const VideoAnalysis = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs value={inputType} onValueChange={(v) => setInputType(v as any)} className="w-full">
+      <Tabs value={inputType} onValueChange={(v) => { setInputType(v as any); resetState(); }} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="upload">
             <UploadCloud className="mr-2 h-4 w-4" />
@@ -538,14 +568,17 @@ export function AIHumanDetector() {
   const [activeTab, setActiveTab] = useState("text");
 
   const descriptions: { [key: string]: string } = {
-    image: "Upload an image to see if it's AI generated.",
     text: "Enter text to see if it's AI written.",
+    image: "Upload an image to see if it's AI generated.",
     video: "Upload a video to see if it's AI generated.",
   };
   
   return (
     <Card className="w-full max-w-lg mx-auto shadow-2xl transition-all duration-500">
       <CardHeader className="text-center p-6">
+        <div className="flex justify-center items-center mb-4">
+          <FileImage className="h-8 w-8 text-primary" />
+        </div>
         <CardTitle className="text-2xl font-headline">Let's Find Out</CardTitle>
         <CardDescription>
           {descriptions[activeTab]}
@@ -572,5 +605,3 @@ export function AIHumanDetector() {
     </Card>
   );
 }
-
-    
