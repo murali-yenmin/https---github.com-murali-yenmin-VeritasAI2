@@ -10,6 +10,10 @@ export async function mediaUrlToDataUri(url: string) {
     if (!contentType) {
       throw new Error('Could not determine content type from URL.');
     }
+    if (!contentType.startsWith('image/') && !contentType.startsWith('video/')) {
+      throw new Error(`Unsupported content type: ${contentType}. Please provide a URL to an image or video file.`);
+    }
+
     const buffer = await response.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
     return { dataUri: `data:${contentType};base64,${base64}` };
@@ -18,3 +22,5 @@ export async function mediaUrlToDataUri(url: string) {
     return { error: error.message || 'An unknown error occurred.' };
   }
 }
+
+    

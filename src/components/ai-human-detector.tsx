@@ -2,7 +2,7 @@
 
 import { useState, useRef, type ChangeEvent, type DragEvent, useCallback, useEffect } from 'react';
 import Image from 'next/image';
-import { Bot, User, UploadCloud, Loader2, RefreshCw, X, Video, Link as LinkIcon, FileImage } from 'lucide-react';
+import { Bot, User, UploadCloud, Loader2, RefreshCw, X, Video, Link as LinkIcon, FileImage, Type } from 'lucide-react';
 import { analyzeImageAiDetermination, type AnalyzeImageAiDeterminationOutput } from '@/ai/flows/analyze-image-ai-determination';
 import { analyzeTextAiDetermination, type AnalyzeTextAiDeterminationOutput } from '@/ai/flows/analyze-text-ai-determination';
 import { analyzeVideoAiDetermination, type AnalyzeVideoAiDeterminationOutput } from '@/ai/flows/analyze-video-ai-determination';
@@ -57,7 +57,7 @@ const AnalysisResultDisplay = ({ analysis, onReset }: { analysis: AnalyzeImageAi
   const ResultIcon = analysis.isAiGenerated ? Bot : User;
   const resultText = analysis.isAiGenerated ? "THIS IS AI" : "THIS IS HUMAN";
   const resultColor = analysis.isAiGenerated ? "text-destructive" : "text-green-500";
-  const potentialModifications = (analysis as AnalyzeImageAiDeterminationOutput).potentialModificationAreas;
+  const potentialModifications = (analysis as AnalyzeImageAiDeterminationOutput | AnalyzeVideoAiDeterminationOutput).potentialModificationAreas;
 
   return (
     <div className="flex flex-col items-center gap-6 animate-in fade-in duration-500">
@@ -567,17 +567,25 @@ const VideoAnalysis = () => {
 export function AIHumanDetector() {
   const [activeTab, setActiveTab] = useState("text");
 
+  const icons: { [key: string]: React.ElementType } = {
+    text: Type,
+    image: FileImage,
+    video: Video,
+  };
+
   const descriptions: { [key: string]: string } = {
     text: "Enter text to see if it's AI written.",
     image: "Upload an image to see if it's AI generated.",
     video: "Upload a video to see if it's AI generated.",
   };
+
+  const ActiveIcon = icons[activeTab];
   
   return (
     <Card className="w-full max-w-lg mx-auto shadow-2xl transition-all duration-500">
       <CardHeader className="text-center p-6">
         <div className="flex justify-center items-center mb-4">
-          <FileImage className="h-8 w-8 text-primary" />
+          <ActiveIcon className="h-8 w-8 text-primary transition-all duration-300" />
         </div>
         <CardTitle className="text-2xl font-headline">Let's Find Out</CardTitle>
         <CardDescription>
@@ -587,9 +595,18 @@ export function AIHumanDetector() {
       <CardContent className="p-6 pt-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="text">Text Analysis</TabsTrigger>
-            <TabsTrigger value="image">Image Analysis</TabsTrigger>
-            <TabsTrigger value="video">Video Analysis</TabsTrigger>
+            <TabsTrigger value="text">
+              <Type className="mr-2 h-4 w-4" />
+              Text
+            </TabsTrigger>
+            <TabsTrigger value="image">
+              <FileImage className="mr-2 h-4 w-4" />
+              Image
+            </TabsTrigger>
+            <TabsTrigger value="video">
+              <Video className="mr-2 h-4 w-4" />
+              Video
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="text" className="mt-6">
             <TextAnalysis />
@@ -605,3 +622,5 @@ export function AIHumanDetector() {
     </Card>
   );
 }
+
+    
