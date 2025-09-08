@@ -2,7 +2,7 @@
 
 import { useState, useRef, type ChangeEvent, type DragEvent, useCallback, useEffect } from 'react';
 import Image from 'next/image';
-import { Bot, User, UploadCloud, Loader2, RefreshCw, X, Video, Link as LinkIcon, FileImage, Type } from 'lucide-react';
+import { Bot, User, UploadCloud, Loader2, RefreshCw, X, Video, Link as LinkIcon, FileImage, Type, AlertCircle } from 'lucide-react';
 import { analyzeImageAiDetermination, type AnalyzeImageAiDeterminationOutput } from '@/ai/flows/analyze-image-ai-determination';
 import { analyzeTextAiDetermination, type AnalyzeTextAiDeterminationOutput } from '@/ai/flows/analyze-text-ai-determination';
 import { analyzeVideoAiDetermination, type AnalyzeVideoAiDeterminationOutput } from '@/ai/flows/analyze-video-ai-determination';
@@ -176,7 +176,9 @@ const ImageAnalysis = () => {
       if (inputType === 'url' && imageUrl) {
         const response = await mediaUrlToDataUri(imageUrl);
         if (response.error) {
-          throw new Error(response.error);
+          setError(response.error);
+          setIsLoading(false);
+          return;
         }
         dataUri = response.dataUri;
         setImagePreview(dataUri!);
@@ -195,7 +197,7 @@ const ImageAnalysis = () => {
       const err = e.message || "An unexpected error occurred during analysis.";
       setError(err);
       toast({ title: "Analysis Failed", description: err, variant: "destructive" });
-      setAnalysis(null); // Ensure no old analysis is shown
+      setAnalysis(null);
     } finally {
       setIsLoading(false);
     }
@@ -228,6 +230,7 @@ const ImageAnalysis = () => {
           </TabsTrigger>
         </TabsList>
       </Tabs>
+      
       {!imagePreview && inputType === 'upload' && (
         <div
           className={cn(
@@ -254,19 +257,28 @@ const ImageAnalysis = () => {
           />
         </div>
       )}
+      
       {!imagePreview && inputType === 'url' && (
-        <div className="space-y-2 flex flex-col items-center justify-center w-full h-64">
+        <div className="space-y-4 flex flex-col items-center justify-center w-full h-64">
            <LinkIcon className="h-12 w-12 text-muted-foreground mb-4"/>
           <p className="text-center text-muted-foreground">
             Paste an image URL to analyze
           </p>
-          <Input 
-            type="url"
-            placeholder="https://..."
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            className="w-full"
-          />
+          <div className="w-full space-y-2">
+            <Input 
+              type="url"
+              placeholder="https://..."
+              value={imageUrl}
+              onChange={(e) => { setImageUrl(e.target.value); setError(null); }}
+              className={cn("w-full", error && "border-destructive")}
+            />
+            {error && (
+              <p className="text-sm text-destructive flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                {error}
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -285,12 +297,14 @@ const ImageAnalysis = () => {
         </div>
       )}
 
-      {error && (
+      {(!imagePreview && error && inputType === 'upload') && (
         <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+      
       <Button onClick={handleAnalyze} disabled={(!imagePreview && !imageUrl) || isLoading} className="w-full" size="lg">
         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         Analyze Image
@@ -354,6 +368,7 @@ const TextAnalysis = () => {
       />
       {error && (
         <Alert variant="destructive">
+           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -441,7 +456,9 @@ const VideoAnalysis = () => {
       if (inputType === 'url' && videoUrl) {
         const response = await mediaUrlToDataUri(videoUrl);
         if (response.error) {
-          throw new Error(response.error);
+          setError(response.error);
+          setIsLoading(false);
+          return;
         }
         dataUri = response.dataUri;
         setVideoPreview(dataUri!);
@@ -520,18 +537,26 @@ const VideoAnalysis = () => {
         </div>
       )}
       {!videoPreview && inputType === 'url' && (
-        <div className="space-y-2 flex flex-col items-center justify-center w-full h-64">
+        <div className="space-y-4 flex flex-col items-center justify-center w-full h-64">
           <LinkIcon className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-center text-muted-foreground">
             Paste a video URL to analyze
           </p>
-          <Input 
-            type="url"
-            placeholder="https://..."
-            value={videoUrl}
-            onChange={(e) => setVideoUrl(e.target.value)}
-            className="w-full"
-          />
+          <div className="w-full space-y-2">
+            <Input 
+              type="url"
+              placeholder="https://..."
+              value={videoUrl}
+              onChange={(e) => { setVideoUrl(e.target.value); setError(null); }}
+              className={cn("w-full", error && "border-destructive")}
+            />
+            {error && (
+              <p className="text-sm text-destructive flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                {error}
+              </p>
+            )}
+          </div>
         </div>
       )}
       
@@ -549,12 +574,15 @@ const VideoAnalysis = () => {
             </Button>
         </div>
       )}
-      {error && (
+
+      {(!videoPreview && error && inputType === 'upload') && (
         <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+
       <Button onClick={handleAnalyze} disabled={(!videoPreview && !videoUrl) || isLoading} className="w-full" size="lg">
         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         Analyze Video
@@ -622,5 +650,3 @@ export function AIHumanDetector() {
     </Card>
   );
 }
-
-    
