@@ -91,7 +91,6 @@ export function AnalysisPanel<T extends AnalysisOutput>({
     setAnalysis(null);
     setError(null);
     setIsLoading(false);
-    setInputType('upload');
     setUrl('');
     if(fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -146,6 +145,13 @@ export function AnalysisPanel<T extends AnalysisOutput>({
       setIsLoading(false);
     }
   };
+  
+  const handleInputTypeChange = (type: 'upload' | 'url') => {
+    if (inputType !== type) {
+        setInputType(type);
+        resetState();
+    }
+  }
 
   if (isLoading) {
     return (
@@ -157,7 +163,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
   }
 
   if (analysis) {
-    return <AnalysisResult analysis={analysis} onReset={resetState} />;
+    return <AnalysisResult analysis={analysis} onReset={() => { resetState(); setInputType('upload');}} />;
   }
   
   const isMediaAnalysis = analysisType === 'image' || analysisType === 'video';
@@ -166,8 +172,8 @@ export function AnalysisPanel<T extends AnalysisOutput>({
     <div className="space-y-6">
       {isMediaAnalysis && (
         <div className="flex justify-center rounded-md bg-muted p-1 text-muted-foreground w-max mx-auto">
-          <Button variant={inputType === 'upload' ? 'ghost' : 'ghost'} onClick={() => { setInputType('upload'); resetState(); }} className={cn('h-8', inputType === 'upload' ? 'bg-background text-foreground shadow-sm' : '')}><File className="mr-2"/>Upload</Button>
-          <Button variant={inputType === 'url' ? 'ghost' : 'ghost'} onClick={() => { setInputType('url'); resetState(); }} className={cn('h-8', inputType === 'url' ? 'bg-background text-foreground shadow-sm' : '')}><Link className="mr-2"/>URL</Button>
+          <Button variant={inputType === 'upload' ? 'ghost' : 'ghost'} onClick={() => handleInputTypeChange('upload')} className={cn('h-8', inputType === 'upload' ? 'bg-background text-foreground shadow-sm' : '')}><File className="mr-2"/>Upload</Button>
+          <Button variant={inputType === 'url' ? 'ghost' : 'ghost'} onClick={() => handleInputTypeChange('url')} className={cn('h-8', inputType === 'url' ? 'bg-background text-foreground shadow-sm' : '')}><Link className="mr-2"/>URL</Button>
         </div>
       )}
 
