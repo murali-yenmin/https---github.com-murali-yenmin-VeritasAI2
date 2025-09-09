@@ -8,25 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import { useCountUp } from "@/hooks/use-count-up";
-import { cn } from "@/lib/utils";
 import type {
   AnalyzeImageAiDeterminationOutput,
   AnalyzeTextAiDeterminationOutput,
   AnalyzeVideoAiDeterminationOutput,
 } from "@/ai/flows/analyze-image-ai-determination";
-import {
-  PolarAngleAxis,
-  PolarGrid,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-} from "recharts";
+
 
 type BreakdownData =
   | AnalyzeImageAiDeterminationOutput["dataBreakdown"]
@@ -106,18 +94,18 @@ const Gauge = ({ value, label }: { value: number; label: string }) => {
 export const DataBreakdown = ({ data, analysisType }: DataBreakdownProps) => {
 
   const getGauges = () => {
-    if('deepfakeLikelihood' in data){
-        return [
-            { label: "AI", value: data.aiLikelihood },
-            { label: "Deepfake", value: data.deepfakeLikelihood },
-            { label: "Quality", value: data.qualityScore },
-        ]
-    }
-    if('readabilityScore' in data) {
+    if(analysisType === 'text' && 'readabilityScore' in data){
         return [
             { label: "AI", value: data.aiLikelihood },
             { label: "Readability", value: data.readabilityScore },
             { label: "Originality", value: data.originalityScore },
+        ]
+    }
+    if((analysisType === 'image' || analysisType === 'video') && 'deepfakeLikelihood' in data) {
+        return [
+            { label: "AI", value: data.aiLikelihood },
+            { label: "Deepfake", value: data.deepfakeLikelihood },
+            { label: "Quality", value: data.qualityScore },
         ]
     }
     return []

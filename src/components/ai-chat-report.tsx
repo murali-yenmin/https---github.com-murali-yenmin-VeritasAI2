@@ -121,7 +121,15 @@ export const AiChatReport = ({ analysis }: AiChatReportProps) => {
       useEffect(() => {
         onFinished();
       },[onFinished])
-      return <DataBreakdown data={dataBreakdown} analysisType={'linguisticPatterns' in detailedAnalysis ? 'text' : 'image'} />;
+      
+      let analysisType: 'text' | 'image' | 'video' = 'image';
+      if ('linguisticPatterns' in detailedAnalysis) {
+        analysisType = 'text';
+      } else if ('temporalInconsistencies' in detailedAnalysis) {
+        analysisType = 'video';
+      }
+      
+      return <DataBreakdown data={dataBreakdown} analysisType={analysisType} />;
     }
     
     return (
