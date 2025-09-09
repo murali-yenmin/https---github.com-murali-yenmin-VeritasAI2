@@ -64,7 +64,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
       setError(err);
       toast({ title: "Error", description: err, variant: "destructive" });
     };
-    reader.readAsDataURL(file);
+    reader.readDataURL(file);
   };
   
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => handleFileSelect(e.target.files?.[0] || null);
