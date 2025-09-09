@@ -174,7 +174,15 @@ export function AnalysisPanel<T extends AnalysisOutput>({
       
     } catch (e: any) {
       const err = e.message || "An unexpected error occurred during analysis.";
-      toast({ title: "Analysis Failed", description: err, variant: "destructive" });
+      if (err.includes('503') || err.toLowerCase().includes('model is overloaded')) {
+          toast({
+              title: "Model Overloaded",
+              description: "The AI model is currently busy. Please try again in a few moments.",
+              variant: "destructive"
+          });
+      } else {
+        toast({ title: "Analysis Failed", description: err, variant: "destructive" });
+      }
       setAnalysis(null);
     } finally {
       setIsLoading(false);
