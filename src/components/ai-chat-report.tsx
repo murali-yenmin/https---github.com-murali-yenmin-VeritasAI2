@@ -108,13 +108,13 @@ export const AiChatReport = ({ analysis }: AiChatReportProps) => {
   }, [messages]);
 
   const TypewriterMessage = ({ message, onFinished }: { message: any, onFinished: () => void }) => {
-    const { displayText, isFinished } = useTypewriter(message.content, 20, onFinished);
+    const { displayedText, isFinished } = useTypewriter(message.content, 20, onFinished);
     
     if(message.role === 'user') return <ChatMessage role="user">{message.content}</ChatMessage>
     
     return (
       <ChatMessage role="assistant" icon={message.icon} title={message.title}>
-        {displayText}
+        {displayedText}
         {!isFinished && <span className="inline-block w-px h-4 bg-foreground align-middle ml-1 typewriter-cursor" />}
       </ChatMessage>
     );
