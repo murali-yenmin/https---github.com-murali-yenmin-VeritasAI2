@@ -69,7 +69,7 @@ If you determine the image is Human-created:
 - If editing is detected, identify potential software used (like Photoshop, Lightroom, GIMP, etc.) and explain your reasoning in the 'editingToolAnalysis' field.
 - Ensure that isAiGenerated is false.
 
-Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'deepfakeLikelihood' and 'qualityScore' based on the image. For 'modelLikelihoods', identify the most likely AI models that could have generated this image (e.g., Midjourney, DALL-E, Stable Diffusion, etc.) and provide an estimated likelihood percentage for each. Only return models with a likelihood greater than 0.
+Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'deepfakeLikelihood' and 'qualityScore' based on the image. For 'modelLikelihoods', identify the most likely AI models that could have generated this image (e.g., Midjourney, DALL-E 3, Stable Diffusion, Meta AI, Adobe Firefly, etc.) and provide an estimated likelihood percentage for each. Only return models with a likelihood greater than 0.
 
 Image: {{media url=photoDataUri}}
 

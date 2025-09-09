@@ -30,7 +30,7 @@ const modelColors: { [key: string]: string } = {
   "Midjourney": "hsl(var(--chart-1))",
   "DALL-E": "hsl(var(--chart-2))",
   "DALL-E 3": "hsl(var(--chart-2))",
-  "4o": "hsl(var(--chart-3))",
+  "Meta AI": "hsl(var(--chart-3))",
   "GAN": "hsl(var(--chart-4))",
   "Stable Diffusion": "hsl(var(--chart-5))",
   "Adobe Firefly": "hsl(var(--chart-1))",
