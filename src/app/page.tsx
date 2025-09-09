@@ -13,7 +13,7 @@ export default function Home() {
           </p>
         </div>
       </header>
-      <main className="flex-grow flex items-start justify-center p-4">
+      <main className="flex-grow flex items-start justify-center p-4 sm:px-6 lg:px-8">
         <AIHumanDetector />
       </main>
       <footer className="py-8 px-4 sm:px-6 lg:px-8 mt-auto">
