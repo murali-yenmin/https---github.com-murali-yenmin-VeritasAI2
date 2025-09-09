@@ -43,6 +43,7 @@ export const AnalysisResult = ({ analysis, onReset }: AnalysisResultProps) => {
       if(detailedAnalysis.visualInconsistencies) details.push({ title: "Visual Inconsistencies", content: detailedAnalysis.visualInconsistencies });
       if(detailedAnalysis.artifactAnalysis) details.push({ title: "Artifact Analysis", content: detailedAnalysis.artifactAnalysis });
       if(detailedAnalysis.contextualClues) details.push({ title: "Contextual Clues", content: detailedAnalysis.contextualClues });
+      if(detailedAnalysis.editingToolAnalysis) details.push({ title: "Editing Tool Analysis", content: detailedAnalysis.editingToolAnalysis });
     } else if ('temporalInconsistencies' in detailedAnalysis) {
       if(detailedAnalysis.temporalInconsistencies) details.push({ title: "Temporal Inconsistencies", content: detailedAnalysis.temporalInconsistencies });
       if(detailedAnalysis.artifactAnalysis) details.push({ title: "Artifact Analysis", content: detailedAnalysis.artifactAnalysis });

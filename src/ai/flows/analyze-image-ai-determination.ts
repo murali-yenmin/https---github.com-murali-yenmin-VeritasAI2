@@ -22,11 +22,11 @@ const AnalyzeImageAiDeterminationOutputSchema = z.object({
   isAiGenerated: z.boolean().describe('Whether the image is AI-generated or not.'),
   confidenceScore: z.number().describe('The confidence score of the AI determination (0-1).'),
   analysis: z.string().describe('A brief summary analysis explaining why the image was classified as AI or Human.'),
-  modelUsed: z.string().describe('The AI model used for the analysis.'),
   detailedAnalysis: z.object({
     visualInconsistencies: z.string().optional().describe('Analysis of unnatural textures, lighting, or shadows.'),
     artifactAnalysis: z.string().optional().describe('Detection of digital artifacts common in AI generation.'),
-    contextualClues: z.string().optional().describe('Clues from the image context or background that support the determination.')
+    contextualClues: z.string().optional().describe('Clues from the image context or background that support the determination.'),
+    editingToolAnalysis: z.string().optional().describe('Analysis of potential editing tools used if the image is human-made but edited.')
   }).describe('A detailed breakdown of the analysis findings.'),
   potentialModificationAreas: z.string().optional().describe('If AI-generated, suggests where potential modifications happened.'),
   dataBreakdown: z.object({
@@ -49,10 +49,9 @@ const analyzeImageAiDeterminationPrompt = ai.definePrompt({
   name: 'analyzeImageAiDeterminationPrompt',
   input: {schema: AnalyzeImageAiDeterminationInputSchema},
   output: {schema: AnalyzeImageAiDeterminationOutputSchema},
-  prompt: `You are an expert in identifying AI-generated images. Analyze the given image and determine if it is AI-generated or human.
+  prompt: `You are an expert in identifying AI-generated images and digitally manipulated photographs. Analyze the given image and determine if it is AI-generated or human-created.
 
 Provide a confidence score (0-1) for your determination. 
-Set the modelUsed to "Gemini 2.5 Flash".
 
 Provide a brief, top-level analysis summary. 
 
@@ -61,13 +60,20 @@ Then, provide a detailed breakdown of your findings, covering:
 - Digital artifact analysis (compression artifacts, weird patterns).
 - Contextual clues within the image.
 
-If you determine that the photo may be AI-generated, suggest to the user where potential modifications happened.
+If you determine the image is AI-generated:
+- Suggest where potential modifications happened.
+- Ensure that isAiGenerated is true.
+
+If you determine the image is Human-created:
+- Analyze it for signs of digital manipulation (e.g., retouching, object removal, filtering).
+- If editing is detected, identify potential software used (like Photoshop, Lightroom, GIMP, etc.) and explain your reasoning in the 'editingToolAnalysis' field.
+- Ensure that isAiGenerated is false.
 
 Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'deepfakeLikelihood' and 'qualityScore' based on the image. For 'modelLikelihoods', identify the most likely AI models that could have generated this image (e.g., Midjourney, DALL-E, Stable Diffusion, etc.) and provide an estimated likelihood percentage for each. Only return models with a likelihood greater than 0.
 
 Image: {{media url=photoDataUri}}
 
-Ensure that isAiGenerated is true if the image is determined to be AI-generated, and false if human. Keep all explanations concise and easy to read.`, 
+Keep all explanations concise and easy to read.`, 
 });
 
 const analyzeImageAiDeterminationFlow = ai.defineFlow(
