@@ -14,6 +14,7 @@ import { AnalysisResult } from '@/components/analysis-result';
 import type { AnalyzeImageAiDeterminationOutput } from '@/ai/flows/analyze-image-ai-determination';
 import type { AnalyzeTextAiDeterminationOutput } from '@/ai/flows/analyze-text-ai-determination';
 import type { AnalyzeVideoAiDeterminationOutput } from '@/ai/flows/analyze-video-ai-determination';
+import { Card, CardContent, CardFooter } from './ui/card';
 
 type AnalysisOutput = AnalyzeImageAiDeterminationOutput | AnalyzeTextAiDeterminationOutput | AnalyzeVideoAiDeterminationOutput;
 
@@ -217,9 +218,9 @@ export function AnalysisPanel<T extends AnalysisOutput>({
 
     if (mediaPreview) {
       return (
-        <div className={cn("relative w-full rounded-lg overflow-hidden", analysisType === 'image' ? 'aspect-square' : 'aspect-video')}>
+        <div className={cn("relative w-full rounded-lg overflow-hidden", analysisType === 'image' ? 'aspect-square max-h-[50vh]' : 'aspect-video')}>
           {analysisType === 'image' ? (
-            <Image src={mediaPreview} alt="Preview" layout="fill" objectFit="cover" />
+            <Image src={mediaPreview} alt="Preview" layout="fill" objectFit="contain" />
           ) : (
             <video src={mediaPreview} controls={!isLoading} className="w-full h-full" />
           )}
@@ -291,34 +292,38 @@ export function AnalysisPanel<T extends AnalysisOutput>({
   }
 
   return (
-    <div className="space-y-6">
-      {isMediaAnalysis && (
-        <div className="flex justify-center rounded-md bg-muted p-1 text-muted-foreground w-max mx-auto">
-          <Button variant={inputType === 'upload' ? 'ghost' : 'ghost'} onClick={() => handleInputTypeChange('upload')} className={cn('h-8', inputType === 'upload' ? 'bg-background text-foreground shadow-sm' : '')} disabled={isLoading}><File className="mr-2"/>Upload</Button>
-          <Button variant={inputType === 'url' ? 'ghost' : 'ghost'} onClick={() => handleInputTypeChange('url')} className={cn('h-8', inputType === 'url' ? 'bg-background text-foreground shadow-sm' : '')} disabled={isLoading}><Link className="mr-2"/>URL</Button>
-        </div>
-      )}
+    <Card className="flex flex-col">
+        <CardContent className="p-6 space-y-6 flex-grow">
+            {isMediaAnalysis && (
+                <div className="flex justify-center rounded-md bg-muted p-1 text-muted-foreground w-max mx-auto">
+                <Button variant={inputType === 'upload' ? 'ghost' : 'ghost'} onClick={() => handleInputTypeChange('upload')} className={cn('h-8', inputType === 'upload' ? 'bg-background text-foreground shadow-sm' : '')} disabled={isLoading}><File className="mr-2"/>Upload</Button>
+                <Button variant={inputType === 'url' ? 'ghost' : 'ghost'} onClick={() => handleInputTypeChange('url')} className={cn('h-8', inputType === 'url' ? 'bg-background text-foreground shadow-sm' : '')} disabled={isLoading}><Link className="mr-2"/>URL</Button>
+                </div>
+            )}
 
-      {renderContent()}
+            {renderContent()}
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+            {error && (
+                <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
+        </CardContent>
       
-      {showAnalyzeButton && (
-        <Button 
-          onClick={handleAnalyze} 
-          disabled={isLoading}
-          className="w-full" 
-          size="lg"
-        >
-          Analyze {analysisType.charAt(0).toUpperCase() + analysisType.slice(1)}
-        </Button>
-      )}
-    </div>
+        {showAnalyzeButton && (
+            <CardFooter className="p-6 pt-0">
+                <Button 
+                    onClick={handleAnalyze} 
+                    disabled={isLoading}
+                    className="w-full" 
+                    size="lg"
+                >
+                    Analyze {analysisType.charAt(0).toUpperCase() + analysisType.slice(1)}
+                </Button>
+            </CardFooter>
+        )}
+    </Card>
   );
 }
