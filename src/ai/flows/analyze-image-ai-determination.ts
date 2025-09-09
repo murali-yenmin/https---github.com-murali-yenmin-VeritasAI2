@@ -29,6 +29,15 @@ const AnalyzeImageAiDeterminationOutputSchema = z.object({
     contextualClues: z.string().optional().describe('Clues from the image context or background that support the determination.')
   }).describe('A detailed breakdown of the analysis findings.'),
   potentialModificationAreas: z.string().optional().describe('If AI-generated, suggests where potential modifications happened.'),
+  dataBreakdown: z.object({
+    aiLikelihood: z.number().describe('Likelihood of being AI-generated (0-100).'),
+    deepfakeLikelihood: z.number().describe('Likelihood of being a deepfake (0-100).'),
+    qualityScore: z.number().describe('Overall quality score of the image (0-100).'),
+    modelLikelihoods: z.array(z.object({
+      model: z.string().describe('The name of the AI model.'),
+      likelihood: z.number().describe('The likelihood score for this model (0-100).')
+    })).describe('Likelihood scores for various AI models.')
+  }).describe('A detailed data breakdown of various analysis metrics.')
 });
 export type AnalyzeImageAiDeterminationOutput = z.infer<typeof AnalyzeImageAiDeterminationOutputSchema>;
 
@@ -53,6 +62,8 @@ Then, provide a detailed breakdown of your findings, covering:
 - Contextual clues within the image.
 
 If you determine that the photo may be AI-generated, suggest to the user where potential modifications happened.
+
+Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'deepfakeLikelihood' and 'qualityScore' based on the image. For 'modelLikelihoods', provide estimated likelihood percentages for the following models: Midjourney, DALL-E, 4o, GAN, Stable Diffusion, Adobe Firefly, Flux. The sum of these likelihoods does not need to be 100.
 
 Image: {{media url=photoDataUri}}
 

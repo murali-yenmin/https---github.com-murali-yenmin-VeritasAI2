@@ -9,6 +9,7 @@ import type { AnalyzeVideoAiDeterminationOutput } from '@/ai/flows/analyze-video
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { useEffect, useState, useMemo } from 'react';
+import { DataBreakdown } from './data-breakdown';
 
 type AnalysisOutput = AnalyzeImageAiDeterminationOutput | AnalyzeTextAiDeterminationOutput | AnalyzeVideoAiDeterminationOutput;
 
@@ -43,7 +44,7 @@ const ChatMessage = ({ role, children, icon: Icon, title }: { role: 'user' | 'as
 };
 
 export const AiChatReport = ({ analysis }: AiChatReportProps) => {
-  const { isAiGenerated, confidenceScore, analysis: summary, detailedAnalysis } = analysis;
+  const { isAiGenerated, confidenceScore, analysis: summary, detailedAnalysis, dataBreakdown } = analysis;
   const confidence = Math.round(confidenceScore * 100);
   
   const getAnalysisDetails = useMemo(() => {
@@ -70,25 +71,29 @@ export const AiChatReport = ({ analysis }: AiChatReportProps) => {
   }, [analysis, detailedAnalysis, isAiGenerated]);
 
   const messages = useMemo(() => [
-    { role: 'user', content: `Can you analyze this?` },
+    { role: 'user' as const, content: `Can you analyze this?` },
     {
-      role: 'assistant',
+      role: 'assistant' as const,
       content: `After analyzing the content, I've determined that it is **${isAiGenerated ? 'likely AI-Generated' : 'likely Human-Created'}**.`,
       title: "Initial Determination",
       icon: isAiGenerated ? Bot : User,
     },
     {
-      role: 'assistant',
+      role: 'assistant' as const,
       content: `My confidence in this assessment is **${confidence}%**. ${summary}`,
       title: "Confidence Score & Summary",
       icon: Percent,
     },
     ...getAnalysisDetails.map(detail => ({
-      role: 'assistant',
+      role: 'assistant' as const,
       content: detail.content,
       title: detail.title,
       icon: detail.icon,
-    }))
+    })),
+    {
+      role: 'assistant' as const,
+      content: 'data_breakdown'
+    }
   ], [isAiGenerated, confidence, summary, getAnalysisDetails]);
 
   const [displayedMessages, setDisplayedMessages] = useState<any[]>([]);
@@ -98,7 +103,7 @@ export const AiChatReport = ({ analysis }: AiChatReportProps) => {
     let currentDelay = 0;
     
     messages.forEach((msg, index) => {
-        const delay = index === 0 ? 0 : (messages[index-1].content?.length || 0) * 20 + 500;
+        const delay = index === 0 ? 0 : (typeof messages[index-1].content === 'string' ? (messages[index-1].content?.length || 0) * 20 : 0) + 500;
         currentDelay += delay;
 
         setTimeout(() => {
@@ -106,11 +111,18 @@ export const AiChatReport = ({ analysis }: AiChatReportProps) => {
         }, currentDelay);
     });
   }, [messages]);
-
+  
   const TypewriterMessage = ({ message, onFinished }: { message: any, onFinished: () => void }) => {
     const { displayedText, isFinished } = useTypewriter(message.content, 20, onFinished);
     
     if(message.role === 'user') return <ChatMessage role="user">{message.content}</ChatMessage>
+    
+    if (message.content === 'data_breakdown') {
+      useEffect(() => {
+        onFinished();
+      },[onFinished])
+      return <DataBreakdown data={dataBreakdown} analysisType={'linguisticPatterns' in detailedAnalysis ? 'text' : 'image'} />;
+    }
     
     return (
       <ChatMessage role="assistant" icon={message.icon} title={message.title}>

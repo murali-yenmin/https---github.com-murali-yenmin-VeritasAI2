@@ -29,6 +29,15 @@ const AnalyzeTextAiDeterminationOutputSchema = z.object({
     cohesionAndFlow: z.string().optional().describe('Evaluation of the text\'s logical flow and coherence.'),
     commonAiTraits: z.string().optional().describe('Detection of traits common in AI writing, like repetition or overly generic phrases.')
   }).describe('A detailed breakdown of the analysis findings.'),
+  dataBreakdown: z.object({
+    aiLikelihood: z.number().describe('Likelihood of being AI-generated (0-100).'),
+    readabilityScore: z.number().describe('A score representing the text\'s readability (0-100).'),
+    originalityScore: z.number().describe('A score for the originality of the text (0-100).'),
+    modelLikelihoods: z.array(z.object({
+      model: z.string().describe('The name of the AI model.'),
+      likelihood: z.number().describe('The likelihood score for this model (0-100).')
+    })).describe('Likelihood scores for various AI models.')
+  }).describe('A detailed data breakdown of various analysis metrics.')
 });
 export type AnalyzeTextAiDeterminationOutput = z.infer<typeof AnalyzeTextAiDeterminationOutputSchema>;
 
@@ -51,6 +60,8 @@ Then, provide a detailed breakdown of your findings, covering:
 - Linguistic patterns (sentence structure, word choice).
 - Cohesion and logical flow.
 - Common AI writing traits (repetition, generic phrases).
+
+Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'readabilityScore' and 'originalityScore' based on the text. For 'modelLikelihoods', provide estimated likelihood percentages for the following models: GPT-3, GPT-4, Gemini, Claude, Llama. The sum of these likelihoods does not need to be 100.
 
 
 Text: {{{text}}}

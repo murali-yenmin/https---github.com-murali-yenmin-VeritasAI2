@@ -29,6 +29,15 @@ const AnalyzeVideoAiDeterminationOutputSchema = z.object({
     audioVisualSync: z.string().optional().describe('Checking for mismatches between audio and video if applicable.')
   }).describe('A detailed breakdown of the analysis findings.'),
   potentialModificationAreas: z.string().optional().describe('If AI-generated, suggests where potential modifications happened.'),
+  dataBreakdown: z.object({
+    aiLikelihood: z.number().describe('Likelihood of being AI-generated (0-100).'),
+    deepfakeLikelihood: z.number().describe('Likelihood of being a deepfake (0-100).'),
+    qualityScore: z.number().describe('Overall quality score of the video (0-100).'),
+    modelLikelihoods: z.array(z.object({
+      model: z.string().describe('The name of the AI model.'),
+      likelihood: z.number().describe('The likelihood score for this model (0-100).')
+    })).describe('Likelihood scores for various AI models.')
+  }).describe('A detailed data breakdown of various analysis metrics.')
 });
 export type AnalyzeVideoAiDeterminationOutput = z.infer<typeof AnalyzeVideoAiDeterminationOutputSchema>;
 
@@ -53,6 +62,8 @@ Then, provide a detailed breakdown of your findings, covering:
 - Audio-visual synchronization issues.
 
 If you determine that the video may be AI-generated, suggest to the user where potential modifications happened.
+
+Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'deepfakeLikelihood' and 'qualityScore' based on the video. For 'modelLikelihoods', provide estimated likelihood percentages for the following models: Sora, Veo, Kling, Gen-2. The sum of these likelihoods does not need to be 100.
 
 Video: {{media url=videoDataUri}}
 
