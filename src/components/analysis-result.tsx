@@ -7,7 +7,7 @@ import type { AnalyzeImageAiDeterminationOutput } from '@/ai/flows/analyze-image
 import type { AnalyzeTextAiDeterminationOutput } from '@/ai/flows/analyze-text-ai-determination';
 import type { AnalyzeVideoAiDeterminationOutput } from '@/ai/flows/analyze-video-ai-determination';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -101,7 +101,6 @@ export const AnalysisResult = ({ analysis, onReset }: AnalysisResultProps) => {
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-6">
               <div className="space-y-6">
-                <DetailCard title="Model Used" content={analysis.modelUsed} icon={Cpu} />
                 {analysis.isAiGenerated && potentialModifications && (
                     <DetailCard title="Potential Modifications" content={potentialModifications} icon={Bot} />
                 )}
