@@ -154,7 +154,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
   }
 
   if (analysis) {
-    return <AnalysisResult analysis={analysis} onReset={() => { resetState(); setInputType('upload');}} />;
+    return <AnalysisResult analysis={analysis} onReset={() => { setInputType('upload'); resetState();}} />;
   }
   
   const isMediaAnalysis = analysisType === 'image' || analysisType === 'video';
