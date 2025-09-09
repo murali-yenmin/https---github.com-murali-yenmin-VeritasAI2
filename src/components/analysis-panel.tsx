@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, type ChangeEvent, type DragEvent, useCallback, useEffect } from 'react';
@@ -31,6 +32,9 @@ const LOADING_MESSAGES = {
   image: ["Extracting metadata...", "Scanning for digital artifacts...", "Analyzing contextual clues..."],
   video: ["Processing video frames...", "Checking for temporal inconsistencies...", "Analyzing audio-visual sync..."]
 };
+
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50 MB
 
 export function AnalysisPanel<T extends AnalysisOutput>({
   analysisType,
@@ -74,6 +78,22 @@ export function AnalysisPanel<T extends AnalysisOutput>({
       setError(err);
       toast({ title: "Invalid File Type", description: err, variant: "destructive" });
       return;
+    }
+    
+    const isImage = analysisType === 'image';
+    const isVideo = analysisType === 'video';
+    const maxSize = isImage ? MAX_IMAGE_SIZE : MAX_VIDEO_SIZE;
+    const maxSizeInMB = isImage ? '10MB' : '50MB';
+
+    if ((isImage || isVideo) && file.size > maxSize) {
+        const err = `${analysisType.charAt(0).toUpperCase() + analysisType.slice(1)} size cannot exceed ${maxSizeInMB}. Please use a URL for larger files.`;
+        setError(err);
+        toast({
+            title: "File Too Large",
+            description: err,
+            variant: "destructive",
+        });
+        return;
     }
 
     const reader = new FileReader();
@@ -327,3 +347,5 @@ export function AnalysisPanel<T extends AnalysisOutput>({
     </Card>
   );
 }
+
+    
