@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, type ChangeEvent, type DragEvent, useCallback } from 'react';
+import { useState, useRef, type ChangeEvent, type DragEvent, useCallback, useEffect } from 'react';
 import Image from 'next/image';
-import { UploadCloud, Link, File, AlertCircle, X } from 'lucide-react';
+import { UploadCloud, Link, File, AlertCircle, X, Terminal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { mediaUrlToDataUri } from '@/app/actions';
@@ -25,6 +25,12 @@ type AnalysisPanelProps<T extends AnalysisOutput> = {
   fileTypeDescription?: string;
 };
 
+const LOADING_MESSAGES = {
+  text: ["Analyzing linguistic patterns...", "Checking for AI traits...", "Finalizing report..."],
+  image: ["Extracting metadata...", "Scanning for digital artifacts...", "Analyzing contextual clues..."],
+  video: ["Processing video frames...", "Checking for temporal inconsistencies...", "Analyzing audio-visual sync..."]
+};
+
 export function AnalysisPanel<T extends AnalysisOutput>({
   analysisType,
   analyzeAction,
@@ -40,8 +46,24 @@ export function AnalysisPanel<T extends AnalysisOutput>({
   const [isDragging, setIsDragging] = useState(false);
   const [inputType, setInputType] = useState<'upload' | 'url'>('upload');
   const [url, setUrl] = useState('');
+  const [loadingMessage, setLoadingMessage] = useState('');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoading) {
+      const messages = LOADING_MESSAGES[analysisType];
+      let messageIndex = 0;
+      setLoadingMessage(messages[messageIndex]);
+      interval = setInterval(() => {
+        messageIndex = (messageIndex + 1) % messages.length;
+        setLoadingMessage(messages[messageIndex]);
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading, analysisType]);
 
   const handleFileSelect = (file: globalThis.File | null) => {
     if (!file) return;
@@ -92,6 +114,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
     setError(null);
     setIsLoading(false);
     setUrl('');
+    setInputType('upload');
     if(fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -149,16 +172,32 @@ export function AnalysisPanel<T extends AnalysisOutput>({
   const handleInputTypeChange = (type: 'upload' | 'url') => {
     if (inputType !== type) {
         setInputType(type);
-        resetState();
+        setMediaPreview(null);
+        setError(null);
+        setUrl('');
     }
   }
 
   if (analysis) {
-    return <AnalysisResult analysis={analysis} onReset={() => { setInputType('upload'); resetState();}} />;
+    return <AnalysisResult analysis={analysis} onReset={resetState} />;
   }
   
   const isMediaAnalysis = analysisType === 'image' || analysisType === 'video';
-  const showAnalyzeButton = !isLoading;
+  const showAnalyzeButton = !isLoading && (analysisType === 'text' ? !!text.trim() : (inputType === 'upload' ? !!mediaPreview : !!url));
+
+  const renderLoadingOverlay = () => (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
+        <div className="relative w-full h-full scanner-grid">
+            <div className="scanner-line" />
+        </div>
+        <div className="absolute bottom-10 left-0 right-0 text-center p-4">
+            <p className="text-lg font-medium text-foreground flex items-center justify-center gap-2">
+              <Terminal className="animate-pulse" /> 
+              <span className="keyframe-text" style={{animation: `fade-in-text 2s ease-in-out infinite`}}>{loadingMessage}</span>
+            </p>
+        </div>
+    </div>
+  );
 
   const renderContent = () => {
     if (analysisType === 'text') {
@@ -171,26 +210,30 @@ export function AnalysisPanel<T extends AnalysisOutput>({
             className="min-h-[16rem] text-base"
             disabled={isLoading}
           />
-          {isLoading && <div className="scanner-animation" />}
+          {isLoading && renderLoadingOverlay()}
         </div>
       );
     }
 
-    if (isLoading || mediaPreview) {
+    if (mediaPreview) {
       return (
         <div className={cn("relative w-full rounded-lg overflow-hidden", analysisType === 'image' ? 'aspect-square' : 'aspect-video')}>
           {analysisType === 'image' ? (
-            <Image src={mediaPreview!} alt="Preview" layout="fill" objectFit="cover" />
+            <Image src={mediaPreview} alt="Preview" layout="fill" objectFit="cover" />
           ) : (
-            <video src={mediaPreview!} controls={!isLoading} className="w-full h-full" />
+            <video src={mediaPreview} controls={!isLoading} className="w-full h-full" />
           )}
-          {isLoading && <div className="scanner-animation" />}
+          {isLoading && renderLoadingOverlay()}
           {!isLoading && mediaPreview && (
             <Button
               variant="destructive"
               size="icon"
-              className="absolute top-2 right-2 rounded-full h-8 w-8"
-              onClick={() => resetState()}
+              className="absolute top-2 right-2 z-20 rounded-full h-8 w-8"
+              onClick={() => {
+                setMediaPreview(null);
+                setUrl('');
+                if(fileInputRef.current) fileInputRef.current.value = "";
+              }}
             >
               <X className="h-4 w-4" />
               <span className="sr-only">Remove {analysisType}</span>
@@ -258,10 +301,6 @@ export function AnalysisPanel<T extends AnalysisOutput>({
 
       {renderContent()}
 
-      {isLoading && (
-         <p className="text-center text-muted-foreground animate-pulse">Analyzing your {analysisType}...</p>
-      )}
-
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -273,7 +312,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
       {showAnalyzeButton && (
         <Button 
           onClick={handleAnalyze} 
-          disabled={isLoading || (analysisType === 'text' ? !text.trim() : (inputType === 'upload' ? !mediaPreview : !url))}
+          disabled={isLoading}
           className="w-full" 
           size="lg"
         >

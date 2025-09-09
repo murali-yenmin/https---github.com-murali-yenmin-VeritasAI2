@@ -84,12 +84,38 @@
 }
 
 @layer components {
-  .scanner-animation {
-    @apply absolute inset-0 z-10 pointer-events-none;
+  .scanner-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--primary) / 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--primary) / 0.1) 1px, transparent 1px);
+    background-size: 2rem 2rem;
   }
-  .scanner-animation::before {
-    content: '';
-    @apply absolute top-0 left-0 right-0 h-[2px] bg-accent/80 shadow-[0_0_10px_theme(colors.accent),0_0_5px_theme(colors.accent)];
-    animation: scan 2.5s infinite ease-in-out;
+  .scanner-line {
+    @apply absolute inset-x-0 top-0 h-10;
+    background: linear-gradient(to bottom, hsl(var(--accent) / 0.5) 0%, hsl(var(--accent) / 0) 100%);
+    box-shadow: 0 2px 15px hsl(var(--accent));
+    animation: scan 3s ease-in-out infinite;
   }
+
+  .typewriter-cursor {
+    animation: blink 1s step-end infinite;
+  }
+}
+
+@keyframes scan {
+  0% { transform: translateY(-2.5rem); }
+  50% { transform: translateY(calc(100% - 2.5rem)); }
+  100% { transform: translateY(-2.5rem); }
+}
+
+@keyframes blink {
+  from, to { opacity: 1 }
+  50% { opacity: 0 }
+}
+
+@keyframes fade-in-text {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
 }
