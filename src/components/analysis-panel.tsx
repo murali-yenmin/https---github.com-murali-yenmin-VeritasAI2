@@ -10,7 +10,6 @@ import { mediaUrlToDataUri } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AnalysisResult } from '@/components/analysis-result';
 import type { AnalyzeImageAiDeterminationOutput } from '@/ai/flows/analyze-image-ai-determination';
 import type { AnalyzeTextAiDeterminationOutput } from '@/ai/flows/analyze-text-ai-determination';
@@ -47,7 +46,6 @@ export function AnalysisPanel<T extends AnalysisOutput>({
   const [text, setText] = useState('');
   const [analysis, setAnalysis] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [inputType, setInputType] = useState<'upload' | 'url'>('upload');
   const [url, setUrl] = useState('');
@@ -75,7 +73,6 @@ export function AnalysisPanel<T extends AnalysisOutput>({
 
     if (fileTypes && !file.type.startsWith(analysisType + '/')) {
       const err = `Please upload a ${analysisType} file (e.g., ${fileTypeDescription}).`;
-      setError(err);
       toast({ title: "Invalid File Type", description: err, variant: "destructive" });
       return;
     }
@@ -87,7 +84,6 @@ export function AnalysisPanel<T extends AnalysisOutput>({
 
     if ((isImage || isVideo) && file.size > maxSize) {
         const err = `${analysisType.charAt(0).toUpperCase() + analysisType.slice(1)} size cannot exceed ${maxSizeInMB}. Please use a URL for larger files.`;
-        setError(err);
         toast({
             title: "File Too Large",
             description: err,
@@ -100,11 +96,9 @@ export function AnalysisPanel<T extends AnalysisOutput>({
     reader.onloadend = () => {
       setMediaPreview(reader.result as string);
       setAnalysis(null);
-      setError(null);
     };
     reader.onerror = () => {
       const err = "Failed to read the selected file.";
-      setError(err);
       toast({ title: "Error", description: err, variant: "destructive" });
     };
     reader.readAsDataURL(file);
@@ -132,7 +126,6 @@ export function AnalysisPanel<T extends AnalysisOutput>({
     setMediaPreview(null);
     setText('');
     setAnalysis(null);
-    setError(null);
     setIsLoading(false);
     setUrl('');
     setInputType('upload');
@@ -143,14 +136,13 @@ export function AnalysisPanel<T extends AnalysisOutput>({
 
   const handleAnalyze = async () => {
     setIsLoading(true);
-    setError(null);
 
     try {
       let analysisInput: any;
 
       if (analysisType === 'text') {
         if (!text.trim()) {
-          setError("Please enter some text to analyze.");
+          toast({ title: "Input Required", description: "Please enter some text to analyze.", variant: "destructive" });
           setIsLoading(false);
           return;
         }
@@ -160,7 +152,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
         if(inputType === 'url') {
           const result = await mediaUrlToDataUri(url);
           if (result.error) {
-            setError(result.error);
+            toast({ title: "URL Error", description: result.error, variant: "destructive" });
             setIsLoading(false);
             return;
           }
@@ -169,7 +161,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
         }
 
         if (!dataUri) {
-          setError(`Please select a ${analysisType} or provide a URL.`);
+          toast({ title: "Input Required", description: `Please select a ${analysisType} or provide a URL.`, variant: "destructive" });
           setIsLoading(false);
           return;
         }
@@ -182,7 +174,6 @@ export function AnalysisPanel<T extends AnalysisOutput>({
       
     } catch (e: any) {
       const err = e.message || "An unexpected error occurred during analysis.";
-      setError(err);
       toast({ title: "Analysis Failed", description: err, variant: "destructive" });
       setAnalysis(null);
     } finally {
@@ -194,7 +185,6 @@ export function AnalysisPanel<T extends AnalysisOutput>({
     if (inputType !== type) {
         setInputType(type);
         setMediaPreview(null);
-        setError(null);
         setUrl('');
     }
   }
@@ -301,7 +291,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
             type="url" 
             placeholder={`Enter ${analysisType} URL`} 
             value={url}
-            onChange={(e) => { setUrl(e.target.value); setError(null); }}
+            onChange={(e) => setUrl(e.target.value)}
             className="w-full"
             disabled={isLoading}
           />
@@ -323,13 +313,6 @@ export function AnalysisPanel<T extends AnalysisOutput>({
 
             {renderContent()}
 
-            {error && (
-                <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-                </Alert>
-            )}
         </CardContent>
       
         {showAnalyzeButton && (
@@ -347,5 +330,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
     </Card>
   );
 }
+
+    
 
     
