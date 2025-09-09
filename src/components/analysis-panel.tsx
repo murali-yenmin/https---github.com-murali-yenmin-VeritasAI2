@@ -68,19 +68,44 @@ export function AnalysisPanel<T extends AnalysisOutput>({
     return () => clearInterval(interval);
   }, [isLoading, analysisType]);
 
-  const handleFileSelect = (file: globalThis.File | null) => {
+  const convertAvifToPng = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new window.Image();
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx?.drawImage(img, 0, 0);
+            const pngDataUrl = canvas.toDataURL('image/png');
+            URL.revokeObjectURL(url);
+            resolve(pngDataUrl);
+        };
+
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Failed to load AVIF image for conversion."));
+        };
+        
+        img.src = url;
+    });
+  }
+
+  const handleFileSelect = async (file: globalThis.File | null) => {
     if (!file) return;
 
-    if (fileTypes && !file.type.startsWith(analysisType + '/')) {
-      const err = `Please upload a ${analysisType} file (e.g., ${fileTypeDescription}).`;
+    if (fileTypes && !fileTypes.split(', ').includes(file.type)) {
+      const err = `Please upload a valid file type (${fileTypeDescription}).`;
       toast({ title: "Invalid File Type", description: err, variant: "destructive" });
       return;
     }
     
     const isImage = analysisType === 'image';
     const isVideo = analysisType === 'video';
-    const maxSize = isImage ? MAX_IMAGE_SIZE : MAX_VIDEO_SIZE;
-    const maxSizeInMB = isImage ? '10MB' : '50MB';
+    const maxSize = isImage ? MAX_IMAGE_SIZE : isVideo ? MAX_VIDEO_SIZE : Infinity;
+    const maxSizeInMB = isImage ? '10MB' : isVideo ? '50MB' : '';
 
     if ((isImage || isVideo) && file.size > maxSize) {
         const err = `${analysisType.charAt(0).toUpperCase() + analysisType.slice(1)} size cannot exceed ${maxSizeInMB}. Please use a URL for larger files.`;
@@ -90,6 +115,18 @@ export function AnalysisPanel<T extends AnalysisOutput>({
             variant: "destructive",
         });
         return;
+    }
+
+    if (file.type === 'image/avif') {
+        try {
+            const pngDataUrl = await convertAvifToPng(file);
+            setMediaPreview(pngDataUrl);
+            setAnalysis(null);
+            return;
+        } catch (error) {
+            toast({ title: "Conversion Failed", description: "Could not convert AVIF image to PNG.", variant: "destructive" });
+            return;
+        }
     }
 
     const reader = new FileReader();
@@ -338,7 +375,3 @@ export function AnalysisPanel<T extends AnalysisOutput>({
     </Card>
   );
 }
-
-    
-
-    
