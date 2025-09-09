@@ -113,6 +113,11 @@ export const DataBreakdown = ({ data, analysisType }: DataBreakdownProps) => {
   }
   
   const filteredModelLikelihoods = data.modelLikelihoods.filter(m => m.likelihood > 0);
+  const gauges = getGauges();
+
+  if(gauges.length === 0 && filteredModelLikelihoods.length === 0) {
+    return null;
+  }
 
   return (
     <Card className="w-full animate-in fade-in duration-500">
@@ -123,18 +128,20 @@ export const DataBreakdown = ({ data, analysisType }: DataBreakdownProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
-            {getGauges().map(gauge => <Gauge key={gauge.label} {...gauge}/>)}
-        </div>
+        {gauges.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
+              {gauges.map(gauge => <Gauge key={gauge.label} {...gauge}/>)}
+          </div>
+        )}
 
         {filteredModelLikelihoods.length > 0 && (
           <div>
-            <h4 className="text-lg font-semibold mb-2">Model Likelihood</h4>
-            <div className="space-y-2">
+            <h4 className="text-lg font-semibold mb-3">Model Likelihood</h4>
+            <div className="space-y-3">
               {filteredModelLikelihoods.map((modelData) => (
-                <div key={modelData.model} className="flex items-center gap-4">
+                <div key={modelData.model} className="flex items-center gap-4 text-sm">
                   <div
-                    className="w-2 h-2 rounded-full"
+                    className="w-2.5 h-2.5 rounded-full"
                     style={{ backgroundColor: modelColors[modelData.model] ?? 'hsl(var(--foreground))' }}
                   />
                   <span className="flex-1 font-medium">{modelData.model}</span>
