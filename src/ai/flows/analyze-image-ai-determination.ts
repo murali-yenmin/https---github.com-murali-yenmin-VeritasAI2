@@ -63,7 +63,7 @@ Then, provide a detailed breakdown of your findings, covering:
 
 If you determine that the photo may be AI-generated, suggest to the user where potential modifications happened.
 
-Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'deepfakeLikelihood' and 'qualityScore' based on the image. For 'modelLikelihoods', provide estimated likelihood percentages for the following models: Midjourney, DALL-E, 4o, GAN, Stable Diffusion, Adobe Firefly, Flux. The sum of these likelihoods does not need to be 100.
+Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'deepfakeLikelihood' and 'qualityScore' based on the image. For 'modelLikelihoods', identify the most likely AI models that could have generated this image (e.g., Midjourney, DALL-E, Stable Diffusion, etc.) and provide an estimated likelihood percentage for each. Only return models with a likelihood greater than 0.
 
 Image: {{media url=photoDataUri}}
 

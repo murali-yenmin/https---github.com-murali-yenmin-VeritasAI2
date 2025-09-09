@@ -63,7 +63,7 @@ Then, provide a detailed breakdown of your findings, covering:
 
 If you determine that the video may be AI-generated, suggest to the user where potential modifications happened.
 
-Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'deepfakeLikelihood' and 'qualityScore' based on the video. For 'modelLikelihoods', provide estimated likelihood percentages for the following models: Sora, Veo, Kling, Gen-2. The sum of these likelihoods does not need to be 100.
+Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'deepfakeLikelihood' and 'qualityScore' based on the video. For 'modelLikelihoods', identify the most likely AI models that could have created this video (e.g., Sora, Veo, Kling, etc.) and provide an estimated likelihood percentage for each. Only return models with a likelihood greater than 0.
 
 Video: {{media url=videoDataUri}}
 

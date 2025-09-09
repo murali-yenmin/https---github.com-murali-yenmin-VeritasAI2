@@ -29,6 +29,7 @@ interface DataBreakdownProps {
 const modelColors: { [key: string]: string } = {
   "Midjourney": "hsl(var(--chart-1))",
   "DALL-E": "hsl(var(--chart-2))",
+  "DALL-E 3": "hsl(var(--chart-2))",
   "4o": "hsl(var(--chart-3))",
   "GAN": "hsl(var(--chart-4))",
   "Stable Diffusion": "hsl(var(--chart-5))",
@@ -110,6 +111,8 @@ export const DataBreakdown = ({ data, analysisType }: DataBreakdownProps) => {
     }
     return []
   }
+  
+  const filteredModelLikelihoods = data.modelLikelihoods.filter(m => m.likelihood > 0);
 
   return (
     <Card className="w-full animate-in fade-in duration-500">
@@ -124,21 +127,23 @@ export const DataBreakdown = ({ data, analysisType }: DataBreakdownProps) => {
             {getGauges().map(gauge => <Gauge key={gauge.label} {...gauge}/>)}
         </div>
 
-        <div>
-          <h4 className="text-lg font-semibold mb-2">Model Likelihood</h4>
-          <div className="space-y-2">
-            {data.modelLikelihoods.map((modelData) => (
-              <div key={modelData.model} className="flex items-center gap-4">
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: modelColors[modelData.model] ?? 'hsl(var(--foreground))' }}
-                />
-                <span className="flex-1 font-medium">{modelData.model}</span>
-                <span className="font-mono text-muted-foreground">{useCountUp(modelData.likelihood)}%</span>
-              </div>
-            ))}
+        {filteredModelLikelihoods.length > 0 && (
+          <div>
+            <h4 className="text-lg font-semibold mb-2">Model Likelihood</h4>
+            <div className="space-y-2">
+              {filteredModelLikelihoods.map((modelData) => (
+                <div key={modelData.model} className="flex items-center gap-4">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: modelColors[modelData.model] ?? 'hsl(var(--foreground))' }}
+                  />
+                  <span className="flex-1 font-medium">{modelData.model}</span>
+                  <span className="font-mono text-muted-foreground">{useCountUp(modelData.likelihood)}%</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

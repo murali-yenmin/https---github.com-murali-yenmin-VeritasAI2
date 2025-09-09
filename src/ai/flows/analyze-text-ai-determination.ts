@@ -61,8 +61,7 @@ Then, provide a detailed breakdown of your findings, covering:
 - Cohesion and logical flow.
 - Common AI writing traits (repetition, generic phrases).
 
-Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'readabilityScore' and 'originalityScore' based on the text. For 'modelLikelihoods', provide estimated likelihood percentages for the following models: GPT-3, GPT-4, Gemini, Claude, Llama. The sum of these likelihoods does not need to be 100.
-
+Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'readabilityScore' and 'originalityScore' based on the text. For 'modelLikelihoods', identify the most likely AI models that could have written this text (e.g., GPT-3, GPT-4, Gemini, etc.) and provide an estimated likelihood percentage for each. Only return models with a likelihood greater than 0.
 
 Text: {{{text}}}
 
