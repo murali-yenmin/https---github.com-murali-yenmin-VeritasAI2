@@ -32,5 +32,5 @@ export const useTypewriter = (text: string, speed: number = 50, onFinished?: () 
 
   const isFinished = displayedText.length === text?.length;
 
-  return { displayText, isFinished };
+  return { displayText: displayedText, isFinished };
 };
