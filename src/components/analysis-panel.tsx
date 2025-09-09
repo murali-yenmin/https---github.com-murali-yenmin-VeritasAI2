@@ -2,7 +2,7 @@
 
 import { useState, useRef, type ChangeEvent, type DragEvent, useCallback } from 'react';
 import Image from 'next/image';
-import { UploadCloud, Loader2, Link, File, AlertCircle, X } from 'lucide-react';
+import { UploadCloud, Link, File, AlertCircle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { mediaUrlToDataUri } from '@/app/actions';
@@ -153,101 +153,113 @@ export function AnalysisPanel<T extends AnalysisOutput>({
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-4 h-64 animate-in fade-in">
-        <Loader2 className="h-12 w-12 text-primary animate-spin" />
-        <p className="text-muted-foreground">Analyzing your {analysisType}...</p>
-      </div>
-    );
-  }
-
   if (analysis) {
     return <AnalysisResult analysis={analysis} onReset={() => { resetState(); setInputType('upload');}} />;
   }
   
   const isMediaAnalysis = analysisType === 'image' || analysisType === 'video';
+  const showAnalyzeButton = !isLoading;
+
+  const renderContent = () => {
+    if (analysisType === 'text') {
+      return (
+        <div className="relative">
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={placeholder}
+            className="min-h-[16rem] text-base"
+            disabled={isLoading}
+          />
+          {isLoading && <div className="scanner-animation" />}
+        </div>
+      );
+    }
+
+    if (mediaPreview) {
+      return (
+        <div className={cn("relative w-full rounded-lg overflow-hidden", analysisType === 'image' ? 'aspect-square' : 'aspect-video')}>
+          {analysisType === 'image' ? (
+            <Image src={mediaPreview} alt="Preview" layout="fill" objectFit="cover" />
+          ) : (
+            <video src={mediaPreview} controls={!isLoading} className="w-full h-full" />
+          )}
+          {isLoading && <div className="scanner-animation" />}
+          {!isLoading && (
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2 rounded-full h-8 w-8"
+              onClick={() => resetState()}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Remove {analysisType}</span>
+            </Button>
+          )}
+        </div>
+      );
+    }
+
+    if (inputType === 'upload') {
+      return (
+        <div
+          className={cn(
+            'relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors',
+            isDragging && 'border-primary bg-accent/20'
+          )}
+          onDragEnter={handleDragEvents}
+          onDragLeave={handleDragEvents}
+          onDragOver={handleDragEvents}
+          onDrop={onDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <UploadCloud className="h-12 w-12 text-muted-foreground mb-4"/>
+          <p className="text-center text-muted-foreground">
+            <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+          </p>
+          <p className="text-xs text-muted-foreground">{fileTypeDescription}</p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={fileTypes}
+            className="hidden"
+            onChange={onFileChange}
+            disabled={isLoading}
+          />
+        </div>
+      );
+    }
+    
+    if (inputType === 'url') {
+      return (
+        <div className="space-y-2">
+          <Input 
+            type="url" 
+            placeholder={`Enter ${analysisType} URL`} 
+            value={url}
+            onChange={(e) => { setUrl(e.target.value); setError(null); }}
+            className="w-full"
+            disabled={isLoading}
+          />
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div className="space-y-6">
       {isMediaAnalysis && (
         <div className="flex justify-center rounded-md bg-muted p-1 text-muted-foreground w-max mx-auto">
-          <Button variant={inputType === 'upload' ? 'ghost' : 'ghost'} onClick={() => handleInputTypeChange('upload')} className={cn('h-8', inputType === 'upload' ? 'bg-background text-foreground shadow-sm' : '')}><File className="mr-2"/>Upload</Button>
-          <Button variant={inputType === 'url' ? 'ghost' : 'ghost'} onClick={() => handleInputTypeChange('url')} className={cn('h-8', inputType === 'url' ? 'bg-background text-foreground shadow-sm' : '')}><Link className="mr-2"/>URL</Button>
+          <Button variant={inputType === 'upload' ? 'ghost' : 'ghost'} onClick={() => handleInputTypeChange('upload')} className={cn('h-8', inputType === 'upload' ? 'bg-background text-foreground shadow-sm' : '')} disabled={isLoading}><File className="mr-2"/>Upload</Button>
+          <Button variant={inputType === 'url' ? 'ghost' : 'ghost'} onClick={() => handleInputTypeChange('url')} className={cn('h-8', inputType === 'url' ? 'bg-background text-foreground shadow-sm' : '')} disabled={isLoading}><Link className="mr-2"/>URL</Button>
         </div>
       )}
 
-      {analysisType === 'text' ? (
-        <Textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={placeholder}
-          className="min-h-[16rem] text-base"
-          disabled={isLoading}
-        />
-      ) : (
-        <>
-          {!mediaPreview && (
-            <>
-              {inputType === 'upload' ? (
-                 <div
-                    className={cn(
-                      'relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors',
-                      isDragging && 'border-primary bg-accent/20'
-                    )}
-                    onDragEnter={handleDragEvents}
-                    onDragLeave={handleDragEvents}
-                    onDragOver={handleDragEvents}
-                    onDrop={onDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <UploadCloud className="h-12 w-12 text-muted-foreground mb-4"/>
-                    <p className="text-center text-muted-foreground">
-                      <span className="font-semibold text-primary">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-muted-foreground">{fileTypeDescription}</p>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept={fileTypes}
-                      className="hidden"
-                      onChange={onFileChange}
-                    />
-                  </div>
-              ) : (
-                <div className="space-y-2">
-                  <Input 
-                    type="url" 
-                    placeholder={`Enter ${analysisType} URL`} 
-                    value={url}
-                    onChange={(e) => { setUrl(e.target.value); setError(null); }}
-                    className="w-full"
-                    disabled={isLoading}
-                  />
-                </div>
-              )}
-            </>
-          )}
+      {renderContent()}
 
-          {mediaPreview && (
-            <div className={cn("relative w-full rounded-lg overflow-hidden", analysisType === 'image' ? 'aspect-square' : 'aspect-video')}>
-              {analysisType === 'image' ? (
-                <Image src={mediaPreview} alt="Preview" layout="fill" objectFit="cover" />
-              ) : (
-                <video src={mediaPreview} controls className="w-full h-full" />
-              )}
-              <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2 rounded-full h-8 w-8"
-                  onClick={() => resetState()}
-                >
-                  <X className="h-4 w-4" />
-                  <span className="sr-only">Remove {analysisType}</span>
-                </Button>
-            </div>
-          )}
-        </>
+      {isLoading && (
+         <p className="text-center text-muted-foreground animate-pulse">Analyzing your {analysisType}...</p>
       )}
 
       {error && (
@@ -258,15 +270,16 @@ export function AnalysisPanel<T extends AnalysisOutput>({
         </Alert>
       )}
       
-      <Button 
-        onClick={handleAnalyze} 
-        disabled={isLoading || (analysisType === 'text' ? !text.trim() : (inputType === 'upload' ? !mediaPreview : !url))}
-        className="w-full" 
-        size="lg"
-      >
-        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        Analyze {analysisType.charAt(0).toUpperCase() + analysisType.slice(1)}
-      </Button>
+      {showAnalyzeButton && (
+        <Button 
+          onClick={handleAnalyze} 
+          disabled={isLoading || (analysisType === 'text' ? !text.trim() : (inputType === 'upload' ? !mediaPreview : !url))}
+          className="w-full" 
+          size="lg"
+        >
+          Analyze {analysisType.charAt(0).toUpperCase() + analysisType.slice(1)}
+        </Button>
+      )}
     </div>
   );
 }
