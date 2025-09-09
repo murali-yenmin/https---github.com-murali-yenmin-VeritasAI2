@@ -49,11 +49,11 @@ const analyzeImageAiDeterminationPrompt = ai.definePrompt({
   name: 'analyzeImageAiDeterminationPrompt',
   input: {schema: AnalyzeImageAiDeterminationInputSchema},
   output: {schema: AnalyzeImageAiDeterminationOutputSchema},
-  prompt: `You are an expert in identifying AI-generated images and digitally manipulated photographs. Analyze the given image and determine if it is AI-generated or human-created.
+  prompt: `You are an expert in identifying AI-generated images and digitally manipulated photographs. Your task is to analyze the given image and determine if it is AI-generated or human-created.
 
-Provide a confidence score (0-1) for your determination. 
+Provide a confidence score (0-1) for your determination.
 
-Provide a brief, top-level analysis summary. 
+Provide a brief, top-level analysis summary.
 
 Then, provide a detailed breakdown of your findings, covering:
 - Visual inconsistencies (unnatural textures, lighting, shadows).
@@ -69,11 +69,11 @@ If you determine the image is Human-created:
 - If editing is detected, identify potential software used (like Photoshop, Lightroom, GIMP, etc.) and explain your reasoning in the 'editingToolAnalysis' field.
 - Ensure that isAiGenerated is false.
 
-Also provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'deepfakeLikelihood' and 'qualityScore' based on the image. For 'modelLikelihoods', identify the most likely AI models that could have generated this image (e.g., Midjourney, DALL-E 3, Stable Diffusion, Meta AI, Adobe Firefly, etc.) and provide an estimated likelihood percentage for each. Only return models with a likelihood greater than 0.
+Finally, provide a detailed data breakdown. The 'aiLikelihood' should be the confidenceScore converted to a percentage. Estimate the 'deepfakeLikelihood' and 'qualityScore' based on the image. For the 'modelLikelihoods', you must identify the most likely AI models that could have generated this image. Consider a wide range of modern models, including but not limited to Midjourney, DALL-E 3, Stable Diffusion, Meta AI, Adobe Firefly, and Flux. Do not just list common models; your analysis should be specific to the visual evidence in the image provided. Provide an estimated likelihood percentage for each model you identify and only return models with a likelihood greater than 0.
 
 Image: {{media url=photoDataUri}}
 
-Keep all explanations concise and easy to read.`, 
+Keep all explanations concise and easy to read.`,
 });
 
 const analyzeImageAiDeterminationFlow = ai.defineFlow(
