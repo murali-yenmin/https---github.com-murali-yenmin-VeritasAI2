@@ -48,7 +48,7 @@ const modelColors: { [key: string]: string } = {
 
 
 const Gauge = ({ value, label }: { value: number; label: string }) => {
-  const animatedValue = useCountUp(value, 1);
+  const animatedValue = useCountUp(value, 1.5);
   const circumference = 2 * Math.PI * 45; // r=45
   const offset = circumference - (animatedValue / 100) * circumference;
 
@@ -120,7 +120,7 @@ export const DataBreakdown = ({ data, analysisType }: DataBreakdownProps) => {
   }
 
   return (
-    <Card className="w-full animate-in fade-in duration-500">
+    <Card>
       <CardHeader>
         <CardTitle>Data Breakdown</CardTitle>
         <CardDescription>

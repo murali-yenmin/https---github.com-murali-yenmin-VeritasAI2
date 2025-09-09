@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw, Bot, User, ChevronDown } from 'lucide-react';
+import { RefreshCw, Bot, User } from 'lucide-react';
 import type { AnalyzeImageAiDeterminationOutput } from '@/ai/flows/analyze-image-ai-determination';
 import type { AnalyzeTextAiDeterminationOutput } from '@/ai/flows/analyze-text-ai-determination';
 import type { AnalyzeVideoAiDeterminationOutput } from '@/ai/flows/analyze-video-ai-determination';
@@ -63,7 +63,7 @@ export const AnalysisResult = ({ analysis, onReset }: AnalysisResultProps) => {
                     {isAiGenerated ? <Bot className="h-10 w-10" /> : <User className="h-10 w-10" />}
                 </div>
                 <div>
-                    <CardTitle className="text-3xl">
+                    <CardTitle className="text-3xl font-headline">
                         {isAiGenerated ? 'Likely AI-Generated' : 'Likely Human-Created'}
                     </CardTitle>
                     <CardDescription className="text-lg">
@@ -77,32 +77,34 @@ export const AnalysisResult = ({ analysis, onReset }: AnalysisResultProps) => {
         </CardContent>
       </Card>
       
-      <DataBreakdown data={dataBreakdown} analysisType={analysisType} />
+      <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <DataBreakdown data={dataBreakdown} analysisType={analysisType} />
 
-      {analysisDetails.length > 0 && (
-        <Card className="w-full">
-          <CardHeader>
-              <CardTitle>Detailed Analysis</CardTitle>
-              <CardDescription>A breakdown of the findings that led to the determination.</CardDescription>
-          </CardHeader>
-          <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                  {analysisDetails.map((detail, index) => (
-                      <AccordionItem value={`item-${index}`} key={index}>
-                          <AccordionTrigger>
-                            <h4 className="font-semibold text-foreground">{detail.title}</h4>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                              <p className="text-muted-foreground text-sm">{detail.content}</p>
-                          </AccordionContent>
-                      </AccordionItem>
-                  ))}
-              </Accordion>
-          </CardContent>
-        </Card>
-      )}
+        {analysisDetails.length > 0 && (
+          <Card>
+            <CardHeader>
+                <CardTitle>Detailed Analysis</CardTitle>
+                <CardDescription>A breakdown of the findings that led to the determination.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Accordion type="single" collapsible className="w-full">
+                    {analysisDetails.map((detail, index) => (
+                        <AccordionItem value={`item-${index}`} key={index}>
+                            <AccordionTrigger>
+                              <h4 className="font-semibold text-foreground">{detail.title}</h4>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <p className="text-muted-foreground text-sm">{detail.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+            </CardContent>
+          </Card>
+        )}
+      </div>
       
-      <Button onClick={onReset} size="lg" className="w-full md:w-auto">
+      <Button onClick={onReset} size="lg" className="w-full md:w-auto mt-4">
         <RefreshCw className="mr-2 h-4 w-4" /> Analyze Another
       </Button>
     </div>

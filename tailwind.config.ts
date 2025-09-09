@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['Roboto', 'sans-serif'],
+        headline: ['Roboto Slab', 'serif'],
         code: ['monospace'],
       },
       colors: {
@@ -90,7 +90,7 @@ export default {
         },
         scan: {
           '0%': { transform: 'translateY(-2.5rem)' },
-          '50%': { transform: 'translateY(calc(100% - 2.5rem))' },
+          '50%': { transform: 'translateY(calc(100% + 2.5rem))' },
           '100%': { transform: 'translateY(-2.5rem)' },
         },
         blink: {

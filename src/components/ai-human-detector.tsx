@@ -27,7 +27,7 @@ export function AIHumanDetector() {
   const ActiveIcon = icons[activeTab];
   
   return (
-    <Card className="w-full max-w-lg mx-auto shadow-2xl transition-all duration-500">
+    <Card className="w-full max-w-4xl mx-auto shadow-2xl transition-all duration-500">
       <CardHeader className="text-center p-6">
         <div className="flex justify-center items-center mb-4">
           <ActiveIcon className="h-8 w-8 text-primary transition-all duration-300" />
@@ -39,7 +39,7 @@ export function AIHumanDetector() {
       </CardHeader>
       <CardContent className="p-6 pt-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
             <TabsTrigger value="text">
               <Type className="mr-2 h-4 w-4" />
               Text
