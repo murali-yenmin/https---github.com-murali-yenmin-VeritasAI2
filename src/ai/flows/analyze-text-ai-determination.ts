@@ -23,6 +23,12 @@ const AnalyzeTextAiDeterminationOutputSchema = z.object({
   isAiGenerated: z.boolean().describe('Whether the text is AI-generated or not.'),
   confidenceScore: z.number().describe('The confidence score of the AI determination (0-1).'),
   analysis: z.string().describe('A brief analysis explaining why the text was classified as AI or Human-written.'),
+  modelUsed: z.string().describe('The AI model used for the analysis.'),
+  detailedAnalysis: z.object({
+    linguisticPatterns: z.string().optional().describe('Analysis of sentence structure, word choice, and complexity.'),
+    cohesionAndFlow: z.string().optional().describe('Evaluation of the text\'s logical flow and coherence.'),
+    commonAiTraits: z.string().optional().describe('Detection of traits common in AI writing, like repetition or overly generic phrases.')
+  }).describe('A detailed breakdown of the analysis findings.'),
 });
 export type AnalyzeTextAiDeterminationOutput = z.infer<typeof AnalyzeTextAiDeterminationOutputSchema>;
 
@@ -36,11 +42,20 @@ const analyzeTextAiDeterminationPrompt = ai.definePrompt({
   output: {schema: AnalyzeTextAiDeterminationOutputSchema},
   prompt: `You are an expert in identifying AI-generated text. Analyze the given text and determine if it is AI-generated or human-written.
 
-Provide a confidence score (0-1) for your determination. Also, provide a brief analysis explaining why the text was classified as AI or human.
+Provide a confidence score (0-1) for your determination.
+Set the modelUsed to "Gemini 2.5 Flash".
+
+Provide a brief, top-level analysis summary.
+
+Then, provide a detailed breakdown of your findings, covering:
+- Linguistic patterns (sentence structure, word choice).
+- Cohesion and logical flow.
+- Common AI writing traits (repetition, generic phrases).
+
 
 Text: {{{text}}}
 
-Ensure that isAiGenerated is true if the text is determined to be AI-generated, and false if human-written.`,
+Ensure that isAiGenerated is true if the text is determined to be AI-generated, and false if human-written. Keep all explanations concise and easy to read.`,
 });
 
 const analyzeTextAiDeterminationFlow = ai.defineFlow(

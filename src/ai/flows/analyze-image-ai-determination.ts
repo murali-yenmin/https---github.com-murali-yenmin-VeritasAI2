@@ -21,7 +21,13 @@ export type AnalyzeImageAiDeterminationInput = z.infer<typeof AnalyzeImageAiDete
 const AnalyzeImageAiDeterminationOutputSchema = z.object({
   isAiGenerated: z.boolean().describe('Whether the image is AI-generated or not.'),
   confidenceScore: z.number().describe('The confidence score of the AI determination (0-1).'),
-  analysis: z.string().describe('A brief analysis explaining why the image was classified as AI or Human.'),
+  analysis: z.string().describe('A brief summary analysis explaining why the image was classified as AI or Human.'),
+  modelUsed: z.string().describe('The AI model used for the analysis.'),
+  detailedAnalysis: z.object({
+    visualInconsistencies: z.string().optional().describe('Analysis of unnatural textures, lighting, or shadows.'),
+    artifactAnalysis: z.string().optional().describe('Detection of digital artifacts common in AI generation.'),
+    contextualClues: z.string().optional().describe('Clues from the image context or background that support the determination.')
+  }).describe('A detailed breakdown of the analysis findings.'),
   potentialModificationAreas: z.string().optional().describe('If AI-generated, suggests where potential modifications happened.'),
 });
 export type AnalyzeImageAiDeterminationOutput = z.infer<typeof AnalyzeImageAiDeterminationOutputSchema>;
@@ -36,11 +42,21 @@ const analyzeImageAiDeterminationPrompt = ai.definePrompt({
   output: {schema: AnalyzeImageAiDeterminationOutputSchema},
   prompt: `You are an expert in identifying AI-generated images. Analyze the given image and determine if it is AI-generated or human.
 
-Provide a confidence score (0-1) for your determination. Also, provide a brief analysis explaining why the image was classified as AI or human. If you determine that the photo may be AI-generated, suggest to the user where potential modifications happened.
+Provide a confidence score (0-1) for your determination. 
+Set the modelUsed to "Gemini 2.5 Flash".
+
+Provide a brief, top-level analysis summary. 
+
+Then, provide a detailed breakdown of your findings, covering:
+- Visual inconsistencies (unnatural textures, lighting, shadows).
+- Digital artifact analysis (compression artifacts, weird patterns).
+- Contextual clues within the image.
+
+If you determine that the photo may be AI-generated, suggest to the user where potential modifications happened.
 
 Image: {{media url=photoDataUri}}
 
-Ensure that isAiGenerated is true if the image is determined to be AI-generated, and false if human.`, 
+Ensure that isAiGenerated is true if the image is determined to be AI-generated, and false if human. Keep all explanations concise and easy to read.`, 
 });
 
 const analyzeImageAiDeterminationFlow = ai.defineFlow(

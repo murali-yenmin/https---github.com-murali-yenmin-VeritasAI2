@@ -22,6 +22,12 @@ const AnalyzeVideoAiDeterminationOutputSchema = z.object({
   isAiGenerated: z.boolean().describe('Whether the video is AI-generated or not.'),
   confidenceScore: z.number().describe('The confidence score of the AI determination (0-1).'),
   analysis: z.string().describe('A brief analysis explaining why the video was classified as AI or Human.'),
+  modelUsed: z.string().describe('The AI model used for the analysis.'),
+  detailedAnalysis: z.object({
+    temporalInconsistencies: z.string().optional().describe('Analysis of how elements change unnaturally over time.'),
+    artifactAnalysis: z.string().optional().describe('Detection of digital artifacts like warping or blurring between frames.'),
+    audioVisualSync: z.string().optional().describe('Checking for mismatches between audio and video if applicable.')
+  }).describe('A detailed breakdown of the analysis findings.'),
   potentialModificationAreas: z.string().optional().describe('If AI-generated, suggests where potential modifications happened.'),
 });
 export type AnalyzeVideoAiDeterminationOutput = z.infer<typeof AnalyzeVideoAiDeterminationOutputSchema>;
@@ -36,11 +42,21 @@ const analyzeVideoAiDeterminationPrompt = ai.definePrompt({
   output: {schema: AnalyzeVideoAiDeterminationOutputSchema},
   prompt: `You are an expert in identifying AI-generated videos. Analyze the given video and determine if it is AI-generated or human.
 
-Provide a confidence score (0-1) for your determination. Also, provide a brief analysis explaining why the video was classified as AI or human. If you determine that the video may be AI-generated, suggest to the user where potential modifications happened.
+Provide a confidence score (0-1) for your determination. 
+Set the modelUsed to "Gemini 2.5 Flash".
+
+Provide a brief, top-level analysis summary.
+
+Then, provide a detailed breakdown of your findings, covering:
+- Temporal inconsistencies (unnatural changes over time).
+- Digital artifacts (warping, blurring between frames).
+- Audio-visual synchronization issues.
+
+If you determine that the video may be AI-generated, suggest to the user where potential modifications happened.
 
 Video: {{media url=videoDataUri}}
 
-Ensure that isAiGenerated is true if the video is determined to be AI-generated, and false if human.`,
+Ensure that isAiGenerated is true if the video is determined to be AI-generated, and false if human. Keep all explanations concise and easy to read.`,
 });
 
 const analyzeVideoAiDeterminationFlow = ai.defineFlow(
