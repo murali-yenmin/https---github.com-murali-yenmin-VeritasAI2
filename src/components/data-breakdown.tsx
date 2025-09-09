@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/card";
 import { useCountUp } from "@/hooks/use-count-up";
 import type {
-  AnalyzeImageAiDeterminationOutput,
-  AnalyzeTextAiDeterminationOutput,
-  AnalyzeVideoAiDeterminationOutput,
+  AnalyzeImageAiDeterminationOutput
 } from "@/ai/flows/analyze-image-ai-determination";
+import type { AnalyzeTextAiDeterminationOutput } from "@/ai/flows/analyze-text-ai-determination";
+import type { AnalyzeVideoAiDeterminationOutput } from "@/ai/flows/analyze-video-ai-determination";
 
 
 type BreakdownData =
@@ -96,16 +96,16 @@ export const DataBreakdown = ({ data, analysisType }: DataBreakdownProps) => {
   const getGauges = () => {
     if(analysisType === 'text' && 'readabilityScore' in data){
         return [
-            { label: "AI", value: data.aiLikelihood },
+            { label: "AI Likelihood", value: data.aiLikelihood },
             { label: "Readability", value: data.readabilityScore },
             { label: "Originality", value: data.originalityScore },
         ]
     }
     if((analysisType === 'image' || analysisType === 'video') && 'deepfakeLikelihood' in data) {
         return [
-            { label: "AI", value: data.aiLikelihood },
+            { label: "AI Likelihood", value: data.aiLikelihood },
             { label: "Deepfake", value: data.deepfakeLikelihood },
-            { label: "Quality", value: data.qualityScore },
+            { label: "Quality Score", value: data.qualityScore },
         ]
     }
     return []
@@ -125,7 +125,7 @@ export const DataBreakdown = ({ data, analysisType }: DataBreakdownProps) => {
         </div>
 
         <div>
-          <h4 className="text-lg font-semibold mb-2">Model Likeliness</h4>
+          <h4 className="text-lg font-semibold mb-2">Model Likelihood</h4>
           <div className="space-y-2">
             {data.modelLikelihoods.map((modelData) => (
               <div key={modelData.model} className="flex items-center gap-4">
