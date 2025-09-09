@@ -267,7 +267,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
-        </Aler
+        </Alert>
       )}
       
       {showAnalyzeButton && (
