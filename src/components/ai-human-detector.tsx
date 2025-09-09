@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -64,8 +65,8 @@ export function AIHumanDetector() {
             <AnalysisPanel<AnalyzeImageAiDeterminationOutput>
               analysisType="image"
               analyzeAction={analyzeImageAiDetermination}
-              fileTypes="image/png, image/jpeg, image/webp, image/avif"
-              fileTypeDescription="PNG, JPG, WEBP, or AVIF"
+              fileTypes="image/png, image/jpeg, image/webp"
+              fileTypeDescription="PNG, JPG, or WEBP"
             />
           </TabsContent>
           <TabsContent value="video" className="mt-6">
