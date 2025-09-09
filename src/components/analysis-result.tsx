@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, User, RefreshCw, Cpu, ScanText, FileVideo, FileImage } from 'lucide-react';
+import { Bot, User, RefreshCw, ScanText, FileVideo, FileImage } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCountUp } from '@/hooks/use-count-up';
 import type { AnalyzeImageAiDeterminationOutput } from '@/ai/flows/analyze-image-ai-determination';
