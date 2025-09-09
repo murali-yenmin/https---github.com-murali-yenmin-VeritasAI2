@@ -64,7 +64,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
       setError(err);
       toast({ title: "Error", description: err, variant: "destructive" });
     };
-    reader.readDataURL(file);
+    reader.readAsDataURL(file);
   };
   
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => handleFileSelect(e.target.files?.[0] || null);
@@ -176,16 +176,16 @@ export function AnalysisPanel<T extends AnalysisOutput>({
       );
     }
 
-    if (mediaPreview) {
+    if (isLoading || mediaPreview) {
       return (
         <div className={cn("relative w-full rounded-lg overflow-hidden", analysisType === 'image' ? 'aspect-square' : 'aspect-video')}>
           {analysisType === 'image' ? (
-            <Image src={mediaPreview} alt="Preview" layout="fill" objectFit="cover" />
+            <Image src={mediaPreview!} alt="Preview" layout="fill" objectFit="cover" />
           ) : (
-            <video src={mediaPreview} controls={!isLoading} className="w-full h-full" />
+            <video src={mediaPreview!} controls={!isLoading} className="w-full h-full" />
           )}
           {isLoading && <div className="scanner-animation" />}
-          {!isLoading && (
+          {!isLoading && mediaPreview && (
             <Button
               variant="destructive"
               size="icon"
@@ -267,7 +267,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        </Aler
       )}
       
       {showAnalyzeButton && (
