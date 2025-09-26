@@ -1,4 +1,4 @@
-# AI or Human? - A Content Analysis Tool
+# AiDentify - A Content Analysis Tool
 
 This is an advanced Next.js application built in Firebase Studio that determines whether a piece of content (text, image, or video) is AI-generated or human-created.
 

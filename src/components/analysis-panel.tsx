@@ -275,7 +275,7 @@ export function AnalysisPanel<T extends AnalysisOutput>({
       return (
         <div className={cn("relative w-full rounded-lg overflow-hidden", analysisType === 'image' ? 'aspect-square max-h-[50vh]' : 'aspect-video')}>
           {analysisType === 'image' ? (
-            <Image src={mediaPreview} alt="Preview" layout="fill" objectFit="contain" />
+            <Image src={mediaPreview} alt="Image preview for AI analysis" layout="fill" objectFit="contain" />
           ) : (
             <video src={mediaPreview} controls={!isLoading} className="w-full h-full" />
           )}

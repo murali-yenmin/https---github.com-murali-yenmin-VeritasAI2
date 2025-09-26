@@ -21,7 +21,7 @@ export type AnalyzeImageAiDeterminationInput = z.infer<typeof AnalyzeImageAiDete
 const AnalyzeImageAiDeterminationOutputSchema = z.object({
   isAiGenerated: z.boolean().describe('Whether the image is AI-generated or not.'),
   confidenceScore: z.number().describe('The confidence score of the AI determination (0-1).'),
-  analysis: z.string().describe('A brief summary analysis explaining why the image was classified as AI or Human.'),
+  analysis: z.string().describe('A brief summary analysis explaining why the image was classified as AI-generated or human-created.'),
   detailedAnalysis: z.object({
     visualInconsistencies: z.string().optional().describe('Analysis of unnatural textures, lighting, or shadows.'),
     artifactAnalysis: z.string().optional().describe('Detection of digital artifacts common in AI generation.'),

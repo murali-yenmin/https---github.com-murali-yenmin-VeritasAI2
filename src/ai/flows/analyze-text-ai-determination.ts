@@ -22,7 +22,7 @@ export type AnalyzeTextAiDeterminationInput = z.infer<typeof AnalyzeTextAiDeterm
 const AnalyzeTextAiDeterminationOutputSchema = z.object({
   isAiGenerated: z.boolean().describe('Whether the text is AI-generated or not.'),
   confidenceScore: z.number().describe('The confidence score of the AI determination (0-1).'),
-  analysis: z.string().describe('A brief analysis explaining why the text was classified as AI or Human-written.'),
+  analysis: z.string().describe('A brief analysis explaining why the text was classified as AI-written or human-written.'),
   modelUsed: z.string().describe('The AI model used for the analysis.'),
   detailedAnalysis: z.object({
     linguisticPatterns: z.string().optional().describe('Analysis of sentence structure, word choice, and complexity.'),

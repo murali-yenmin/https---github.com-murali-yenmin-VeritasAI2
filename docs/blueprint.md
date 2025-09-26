@@ -1,11 +1,11 @@
-# **App Name**: AI or Human?
+# **App Name**: AiDentify
 
 ## Core Features:
 
 - Image Submission: Allow users to upload an image of a face for analysis.
 - AI Determination Tool: Employ an AI tool to determine whether the uploaded face is AI-generated or human.
-- Result Display: Clearly display the result (AI or Human) along with a confidence score.
-- Detailed Analysis: Provide a brief analysis explaining why the image was classified as AI or Human. If it determines that the photo may be AI-generated, suggest to the user where potential modifications happened.
+- Result Display: clearly display the result (AI-generated or human-created) along with a confidence score.
+- Detailed Analysis: Provide a brief analysis explaining why the image was classified as AI-generated or human-created. If it determines that the photo may be AI-generated, suggest to the user where potential modifications happened.
 
 ## Style Guidelines:
 

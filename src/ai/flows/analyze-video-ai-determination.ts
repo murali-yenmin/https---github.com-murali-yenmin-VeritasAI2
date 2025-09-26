@@ -21,7 +21,7 @@ export type AnalyzeVideoAiDeterminationInput = z.infer<typeof AnalyzeVideoAiDete
 const AnalyzeVideoAiDeterminationOutputSchema = z.object({
   isAiGenerated: z.boolean().describe('Whether the video is AI-generated or not.'),
   confidenceScore: z.number().describe('The confidence score of the AI determination (0-1).'),
-  analysis: z.string().describe('A brief analysis explaining why the video was classified as AI or Human.'),
+  analysis: z.string().describe('A brief analysis explaining why the video was classified as AI-generated or human-created.'),
   modelUsed: z.string().describe('The AI model used for the analysis.'),
   detailedAnalysis: z.object({
     temporalInconsistencies: z.string().optional().describe('Analysis of how elements change unnaturally over time.'),

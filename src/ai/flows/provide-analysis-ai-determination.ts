@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview An AI analysis flow to explain why an image was classified as AI or Human.
+ * @fileOverview An AI analysis flow to explain why an image was classified as AI-generated or human-created.
  *
  * - provideAnalysisForAiDetermination - A function that handles the AI analysis process.
  * - ProvideAnalysisForAiDeterminationInput - The input type for the provideAnalysisForAiDetermination function.
@@ -24,7 +24,7 @@ export type ProvideAnalysisForAiDeterminationInput = z.infer<
 >;
 
 const ProvideAnalysisForAiDeterminationOutputSchema = z.object({
-  analysis: z.string().describe('The analysis explaining why the image was classified as AI or Human.'),
+  analysis: z.string().describe('The analysis explaining why the image was classified as AI-generated or human-created.'),
   potentialModifications: z
     .string()
     .optional()
@@ -46,7 +46,7 @@ const prompt = ai.definePrompt({
   output: {schema: ProvideAnalysisForAiDeterminationOutputSchema},
   prompt: `You are an expert in analyzing images to determine if they are AI-generated or human-created.
 
-You are provided with an image, the determination of whether it is AI or Human, and a confidence score.
+You are provided with an image, the determination of whether it is AI-generated or human-created, and a confidence score.
 
 Based on this information, provide a brief analysis explaining why the image was classified as such.
 If the image is classified as AI, also suggest where potential modifications might have occurred.
