@@ -7,7 +7,7 @@ export default function Home() {
     <div className="flex flex-col min-h-dvh bg-background">
       <header className="py-12 md:py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center">
-          <div className="flex justify-center items-center gap-4 border-b-2 border-grey pb-6">
+          <div className="flex justify-center items-center gap-4 border-b-2 border-grey pb-8">
             <Image src={logo} alt="AiDentify Logo" width={64} height={64} />
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-headline font-bold text-primary tracking-tight ">
               AiDentify
